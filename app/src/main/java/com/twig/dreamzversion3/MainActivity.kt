@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillParentMaxHeight
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -242,15 +241,6 @@ fun DreamHome(
     val selectedDateLabel = uiState.selectedDateRange?.let { dateFormatter.format(Date(it.start)) }
 
     val listState = rememberLazyListState()
-    val scrollbarStyle = ScrollbarStyle(
-        minimalHeight = 24.dp,
-        thickness = 6.dp,
-        shape = RoundedCornerShape(3.dp),
-        hoverDurationMillis = 250,
-        unhoverColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
-        hoveredColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-    )
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -314,8 +304,7 @@ fun DreamHome(
                     .padding(padding)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
-                contentPadding = PaddingValues(bottom = 32.dp),
-                scrollbarStyle = scrollbarStyle
+                contentPadding = PaddingValues(bottom = 32.dp)
             ) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -467,7 +456,7 @@ fun DreamHome(
                 }
 
                 item {
-                    Box(modifier = Modifier.fillParentMaxHeight()) {
+                    Box(modifier = Modifier.fillMaxHeight()) {
                         DreamEntries(
                             entries = shownEntries,
                             layoutMode = uiState.layoutMode,
