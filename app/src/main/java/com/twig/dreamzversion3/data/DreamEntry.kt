@@ -11,6 +11,10 @@ data class DreamEntry(
     val body: String,
     val mood: String? = null,
     val lucid: Boolean = false,
+    val tags: List<String> = emptyList(),
+    val intensityRating: Int = 0,
+    val emotionRating: Int = 0,
+    val lucidityRating: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val editedAt: Long = System.currentTimeMillis()
 )

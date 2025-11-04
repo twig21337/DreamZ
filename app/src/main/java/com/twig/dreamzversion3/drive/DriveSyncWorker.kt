@@ -62,6 +62,7 @@ class DriveSyncWorker(
         const val KEY_STEP = "step"
         const val KEY_TOTAL = "total"
         const val WORK_NAME = "drive_sync"
+        const val PERIODIC_WORK_NAME = "drive_sync_periodic"
     }
 }
 
@@ -72,6 +73,10 @@ private fun entryToJson(e: com.twig.dreamzversion3.data.DreamEntry): String = ""
   "body": ${esc(e.body)},
   "mood": ${esc(e.mood)},
   "lucid": ${e.lucid},
+  "tags": ${listToJson(e.tags)},
+  "intensityRating": ${e.intensityRating},
+  "emotionRating": ${e.emotionRating},
+  "lucidityRating": ${e.lucidityRating},
   "createdAt": ${e.createdAt},
   "editedAt": ${e.editedAt}
 }
@@ -79,3 +84,6 @@ private fun entryToJson(e: com.twig.dreamzversion3.data.DreamEntry): String = ""
 
 private fun esc(s: String?): String =
     if (s == null) "null" else "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+private fun listToJson(items: List<String>): String =
+    items.joinToString(prefix = "[", postfix = "]") { esc(it) }
