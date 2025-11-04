@@ -80,7 +80,7 @@ class DreamViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val dreamsignsFlow = allEntriesFlow.map { entries ->
-        val texts = entries.map { it.title + " " + it.body }
+        val texts = entries.map { it.body }
         extractDreamsigns(texts, topK = 20)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
