@@ -92,28 +92,52 @@ class DreamViewModel(
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), curatedTags)
 
-    val uiState: StateFlow<DreamUiState> = combine(
-        entriesFlow,
-        draftFlow,
-        dreamsignsFlow,
-        syncState,
+    private data class CoreUiState(
+        val entries: List<DreamEntry>,
+        val draft: DreamDraft,
+        val dreamsigns: List<Dreamsign>,
+        val sync: SyncState
+    )
+
+    private data class PreferencesUiState(
+        val isDarkTheme: Boolean,
+        val layoutMode: DreamLayoutMode,
+        val backupFrequency: BackupFrequency,
+        val availableTags: List<String>
+    )
+
+    private val coreState = combine(entriesFlow, draftFlow, dreamsignsFlow, syncState) { entries, draft, signs, sync ->
+        CoreUiState(entries, draft, signs, sync)
+    }
+
+    private val preferencesState = combine(
         darkThemeFlow,
         layoutModeState,
         backupFrequencyState,
-        availableTagsFlow,
+        availableTagsFlow
+    ) { isDark, layoutMode, backupFrequency, tags ->
+        PreferencesUiState(isDark, layoutMode, backupFrequency, tags)
+    }
+
+    private val corePreferencesState = combine(coreState, preferencesState) { core, preferences ->
+        core to preferences
+    }
+
+    val uiState: StateFlow<DreamUiState> = combine(
+        corePreferencesState,
         searchQuery,
         selectedTag,
         selectedDate
-    ) { entries, draft, signs, sync, isDark, layoutMode, backupFrequency, tags, query, tag, date ->
+    ) { (core, preferences), query, tag, date ->
         DreamUiState(
-            entries = entries,
-            draft = draft,
-            dreamsigns = signs,
-            syncState = sync,
-            isDarkTheme = isDark,
-            layoutMode = layoutMode,
-            backupFrequency = backupFrequency,
-            availableTags = tags,
+            entries = core.entries,
+            draft = core.draft,
+            dreamsigns = core.dreamsigns,
+            syncState = core.sync,
+            isDarkTheme = preferences.isDarkTheme,
+            layoutMode = preferences.layoutMode,
+            backupFrequency = preferences.backupFrequency,
+            availableTags = preferences.availableTags,
             searchQuery = query,
             activeTag = tag,
             selectedDateRange = date
