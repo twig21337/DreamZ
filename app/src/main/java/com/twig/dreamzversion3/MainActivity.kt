@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillParentMaxHeight
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,8 +26,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -242,15 +243,7 @@ fun DreamHome(
     val selectedDateLabel = uiState.selectedDateRange?.let { dateFormatter.format(Date(it.start)) }
 
     val listState = rememberLazyListState()
-    val scrollbarStyle = ScrollbarStyle(
-        minimalHeight = 24.dp,
-        thickness = 6.dp,
-        shape = RoundedCornerShape(3.dp),
-        hoverDurationMillis = 250,
-        unhoverColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
-        hoveredColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-    )
-
+    val gridState = rememberLazyGridState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -306,7 +299,180 @@ fun DreamHome(
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        val headerContent: @Composable () -> Unit = {
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    DraftEditor(
+                        title = uiState.draft.title,
+                        body = uiState.draft.body,
+                        mood = uiState.draft.mood,
+                        lucid = uiState.draft.lucid,
+                        availableTags = uiState.availableTags,
+                        selectedTags = uiState.draft.tags,
+                        intensityRating = uiState.draft.intensityRating,
+                        emotionRating = uiState.draft.emotionRating,
+                        lucidityRating = uiState.draft.lucidityRating,
+                        onTitleChange = onTitleChange,
+                        onBodyChange = onBodyChange,
+                        onMoodChange = onMoodChange,
+                        onLucidChange = onLucidChange,
+                        onTagToggle = onTagToggle,
+                        onAddCustomTag = onAddCustomTag,
+                        onIntensityChange = onIntensityChange,
+                        onEmotionChange = onEmotionChange,
+                        onLucidityRatingChange = onLucidityRatingChange,
+                        onClear = onClearDraft
+                    )
+
+                    DriveControls(
+                        driveStatus = driveStatus,
+                        syncState = syncState,
+                        backupFrequency = uiState.backupFrequency,
+                        onConnect = {
+                            val client = buildGoogleSignInClient(context)
+                            val account = getLastAccount(context)
+                            if (account == null) {
+                                signInLauncher.launch(client.signInIntent)
+                            } else {
+                                driveStatus = "Already connected as ${account.email}"
+                            }
+                        },
+                        onSync = {
+                            scope.launch {
+                                try {
+                                    driveStatus = "Authorizing…"
+                                    val token = fetchAccessToken(activity)
+                                    driveStatus = "Sync queued"
+                                    onSyncRequested(token)
+                                } catch (t: Throwable) {
+                                    driveStatus = "Sync error: ${t.localizedMessage ?: t::class.simpleName}"
+                                }
+                            }
+                        },
+                        onFrequencyChange = onBackupFrequencyChange,
+                        canSync = getLastAccount(context) != null
+                    )
+
+                    driveStatus?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                    }
+
+                    syncState.errorMessage?.let { error ->
+                        Text(
+                            error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = uiState.searchQuery,
+                        onValueChange = onSearchChange,
+                        label = { Text("Search dreams") },
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
+                    )
+
+                    if (uiState.availableTags.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Filter by tag", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                uiState.availableTags.forEach { tag ->
+                                    FilterChip(
+                                        selected = uiState.activeTag?.equals(tag, ignoreCase = true) == true,
+                                        onClick = { onFilterTag(tag) },
+                                        label = { Text(tag) }
+                                    )
+                                }
+                            }
+                            if (uiState.activeTag != null) {
+                                TextButton(onClick = onClearTag) { Text("Clear tag filter") }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Filter by date", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { showDatePicker = true }) {
+                                Icon(Icons.Rounded.CalendarMonth, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text(selectedDateLabel ?: "Pick a date")
+                            }
+                            if (uiState.selectedDateRange != null) {
+                                TextButton(onClick = onClearDate) { Text("Clear date") }
+                            }
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Layout", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    FilterChip(
+                        selected = uiState.layoutMode == DreamLayoutMode.LIST,
+                        onClick = { onLayoutModeChange(DreamLayoutMode.LIST) },
+                        label = { Text("List") },
+                        leadingIcon = { Icon(Icons.Rounded.ViewList, contentDescription = null) }
+                    )
+                    FilterChip(
+                        selected = uiState.layoutMode == DreamLayoutMode.CARDS,
+                        onClick = { onLayoutModeChange(DreamLayoutMode.CARDS) },
+                        label = { Text("Cards") },
+                        leadingIcon = { Icon(Icons.Rounded.ViewModule, contentDescription = null) }
+                    )
+                    Spacer(Modifier.weight(1f))
+                    if (uiState.searchQuery.isNotBlank() || uiState.activeTag != null || uiState.selectedDateRange != null) {
+                        TextButton(onClick = onClearFilters) { Text("Clear filters") }
+                    }
+                }
+
+                if (uiState.dreamsigns.isNotEmpty()) {
+                    DreamsignsRow(
+                        signs = uiState.dreamsigns,
+                        activeFilter = uiState.searchQuery,
+                        onFilterSelected = { sign ->
+                            if (uiState.searchQuery.equals(sign, ignoreCase = true)) {
+                                onSearchChange("")
+                            } else {
+                                onDreamsignSelected(sign)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        if (uiState.layoutMode == DreamLayoutMode.CARDS) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 260.dp),
+                state = gridState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 32.dp)
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    headerContent()
+                }
+
+                if (shownEntries.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        DreamEmptyState(modifier = Modifier.fillMaxWidth())
+                    }
+                } else {
+                    items(shownEntries, key = { it.id }) { entry ->
+                        DreamCard(entry, onDelete = { onDelete(entry) })
+                    }
+                }
+            }
+        } else {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -314,187 +480,40 @@ fun DreamHome(
                     .padding(padding)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
-                contentPadding = PaddingValues(bottom = 32.dp),
-                scrollbarStyle = scrollbarStyle
+                contentPadding = PaddingValues(bottom = 32.dp)
             ) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        DraftEditor(
-                            title = uiState.draft.title,
-                            body = uiState.draft.body,
-                            mood = uiState.draft.mood,
-                            lucid = uiState.draft.lucid,
-                            availableTags = uiState.availableTags,
-                            selectedTags = uiState.draft.tags,
-                            intensityRating = uiState.draft.intensityRating,
-                            emotionRating = uiState.draft.emotionRating,
-                            lucidityRating = uiState.draft.lucidityRating,
-                            onTitleChange = onTitleChange,
-                            onBodyChange = onBodyChange,
-                            onMoodChange = onMoodChange,
-                            onLucidChange = onLucidChange,
-                            onTagToggle = onTagToggle,
-                            onAddCustomTag = onAddCustomTag,
-                            onIntensityChange = onIntensityChange,
-                            onEmotionChange = onEmotionChange,
-                            onLucidityRatingChange = onLucidityRatingChange,
-                            onClear = onClearDraft
-                        )
-
-                        DriveControls(
-                            driveStatus = driveStatus,
-                            syncState = syncState,
-                            backupFrequency = uiState.backupFrequency,
-                            onConnect = {
-                                val client = buildGoogleSignInClient(context)
-                                val account = getLastAccount(context)
-                                if (account == null) {
-                                    signInLauncher.launch(client.signInIntent)
-                                } else {
-                                    driveStatus = "Already connected as ${account.email}"
-                                }
-                            },
-                            onSync = {
-                                scope.launch {
-                                    try {
-                                        driveStatus = "Authorizing…"
-                                        val token = fetchAccessToken(activity)
-                                        driveStatus = "Sync queued"
-                                        onSyncRequested(token)
-                                    } catch (t: Throwable) {
-                                        driveStatus = "Sync error: ${t.localizedMessage ?: t::class.simpleName}"
-                                    }
-                                }
-                            },
-                            onFrequencyChange = onBackupFrequencyChange,
-                            canSync = getLastAccount(context) != null
-                        )
-
-                        driveStatus?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
-                        }
-
-                        syncState.errorMessage?.let { error ->
-                            Text(
-                                error,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-                    }
+                    headerContent()
                 }
 
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        OutlinedTextField(
-                            value = uiState.searchQuery,
-                            onValueChange = onSearchChange,
-                            label = { Text("Search dreams") },
-                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.large
-                        )
-
-                        if (uiState.availableTags.isNotEmpty()) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Filter by tag", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    uiState.availableTags.forEach { tag ->
-                                        FilterChip(
-                                            selected = uiState.activeTag?.equals(tag, ignoreCase = true) == true,
-                                            onClick = { onFilterTag(tag) },
-                                            label = { Text(tag) }
-                                        )
-                                    }
-                                }
-                                if (uiState.activeTag != null) {
-                                    AssistChip(onClick = onClearTag, label = { Text("Clear tag filter") })
-                                }
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Browse by date", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.width(12.dp))
-                            AssistChip(
-                                onClick = { showDatePicker = true },
-                                label = { Text(selectedDateLabel ?: "Pick a day") },
-                                leadingIcon = { Icon(Icons.Rounded.CalendarMonth, contentDescription = null) }
-                            )
-                            if (uiState.selectedDateRange != null) {
-                                Spacer(Modifier.width(8.dp))
-                                TextButton(onClick = onClearDate) { Text("Clear") }
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Layout", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            FilterChip(
-                                selected = uiState.layoutMode == DreamLayoutMode.LIST,
-                                onClick = { onLayoutModeChange(DreamLayoutMode.LIST) },
-                                label = { Text("List") },
-                                leadingIcon = { Icon(Icons.Rounded.ViewList, contentDescription = null) }
-                            )
-                            FilterChip(
-                                selected = uiState.layoutMode == DreamLayoutMode.CARDS,
-                                onClick = { onLayoutModeChange(DreamLayoutMode.CARDS) },
-                                label = { Text("Cards") },
-                                leadingIcon = { Icon(Icons.Rounded.ViewModule, contentDescription = null) }
-                            )
-                            Spacer(Modifier.weight(1f))
-                            if (uiState.searchQuery.isNotBlank() || uiState.activeTag != null || uiState.selectedDateRange != null) {
-                                TextButton(onClick = onClearFilters) { Text("Clear filters") }
-                            }
-                        }
-                    }
-                }
-
-                if (uiState.dreamsigns.isNotEmpty()) {
+                if (shownEntries.isEmpty()) {
                     item {
-                        DreamsignsRow(
-                            signs = uiState.dreamsigns,
-                            activeFilter = uiState.searchQuery,
-                            onFilterSelected = { sign ->
-                                if (uiState.searchQuery.equals(sign, ignoreCase = true)) {
-                                    onSearchChange("")
-                                } else {
-                                    onDreamsignSelected(sign)
-                                }
-                            }
-                        )
+                        DreamEmptyState(modifier = Modifier.fillMaxWidth())
                     }
-                }
-
-                item {
-                    Box(modifier = Modifier.fillParentMaxHeight()) {
-                        DreamEntries(
-                            entries = shownEntries,
-                            layoutMode = uiState.layoutMode,
-                            onDelete = onDelete,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                } else {
+                    items(shownEntries, key = { it.id }) { entry ->
+                        DreamListRow(entry, onDelete = { onDelete(entry) })
                     }
                 }
             }
+        }
 
-            if (showDatePicker) {
-                DatePickerDialog(
-                    onDismissRequest = { showDatePicker = false },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                showDatePicker = false
-                                onDateFilter(datePickerState.selectedDateMillis)
-                            }
-                        ) { Text("Apply") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
-                    }
-                ) {
-                    DatePicker(state = datePickerState)
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDatePicker = false
+                            onDateFilter(datePickerState.selectedDateMillis)
+                        }
+                    ) { Text("Apply") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                 }
+            ) {
+                DatePicker(state = datePickerState)
             }
         }
     }
@@ -767,44 +786,15 @@ private fun DreamsignsRow(
 }
 
 @Composable
-private fun DreamEntries(
-    entries: List<DreamEntry>,
-    layoutMode: DreamLayoutMode,
-    onDelete: (DreamEntry) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (entries.isEmpty()) {
-        Column(
-            modifier = modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(48.dp))
-            Spacer(Modifier.height(8.dp))
-            Text("No dreams yet", style = MaterialTheme.typography.bodyMedium)
-        }
-    } else {
-        when (layoutMode) {
-            DreamLayoutMode.LIST -> {
-                LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(entries, key = { it.id }) { entry ->
-                        DreamListRow(entry, onDelete = { onDelete(entry) })
-                    }
-                }
-            }
-            DreamLayoutMode.CARDS -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 260.dp),
-                    modifier = modifier,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(entries, key = { it.id }) { entry ->
-                        DreamCard(entry, onDelete = { onDelete(entry) })
-                    }
-                }
-            }
-        }
+private fun DreamEmptyState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(48.dp))
+        Spacer(Modifier.height(8.dp))
+        Text("No dreams yet", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
