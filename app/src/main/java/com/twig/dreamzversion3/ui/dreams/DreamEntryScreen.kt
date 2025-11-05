@@ -60,6 +60,7 @@ fun DreamEntryRoute(
         onTitleChange = viewModel::onTitleChange,
         onDescriptionChange = viewModel::onDescriptionChange,
         onMoodChange = viewModel::onMoodChange,
+        onTagsInputChange = viewModel::onTagsInputChange,
         onLucidityChange = viewModel::onLucidityChange,
         onIntensityChange = viewModel::onIntensityChange,
         onEmotionChange = viewModel::onEmotionChange,
@@ -80,6 +81,7 @@ fun DreamEntryScreen(
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onMoodChange: (String) -> Unit,
+    onTagsInputChange: (String) -> Unit,
     onLucidityChange: (Float) -> Unit,
     onIntensityChange: (Float) -> Unit,
     onEmotionChange: (Float) -> Unit,
@@ -133,6 +135,13 @@ fun DreamEntryScreen(
                 label = { Text(text = stringResource(id = R.string.dream_description_label)) },
                 supportingText = { Text(text = stringResource(id = R.string.dream_description_support)) },
                 minLines = 4
+            )
+            OutlinedTextField(
+                value = entryState.tagsInput,
+                onValueChange = onTagsInputChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = stringResource(id = R.string.dream_tags_label)) },
+                supportingText = { Text(text = stringResource(id = R.string.dream_tags_support)) }
             )
             OutlinedTextField(
                 value = entryState.mood,

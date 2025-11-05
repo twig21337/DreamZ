@@ -183,6 +183,15 @@ private fun DreamsDetailList(
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
+                    if (dream.tags.isNotEmpty()) {
+                        Text(
+                            text = stringResource(
+                                id = R.string.dream_tags_value,
+                                dream.tags.joinToString(", ")
+                            ),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                     Text(
                         text = stringResource(
                             id = R.string.lucidity_label,

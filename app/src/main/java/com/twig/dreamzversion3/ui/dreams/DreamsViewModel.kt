@@ -47,6 +47,10 @@ class DreamsViewModel(
         _dreamEntryState.update { it.copy(mood = mood) }
     }
 
+    fun onTagsInputChange(tags: String) {
+        _dreamEntryState.update { it.copy(tagsInput = tags) }
+    }
+
     fun onLucidityChange(lucidity: Float) {
         _dreamEntryState.update { it.copy(lucidity = lucidity) }
     }
@@ -77,7 +81,8 @@ class DreamsViewModel(
             lucidity = entry.lucidity,
             intensity = entry.intensity,
             emotion = entry.emotion,
-            isRecurring = entry.isRecurring
+            isRecurring = entry.isRecurring,
+            tags = entry.tags
         )
 
         if (entry.isEditing) {
@@ -106,7 +111,8 @@ class DreamsViewModel(
             lucidity = dream.lucidity,
             intensity = dream.intensity,
             emotion = dream.emotion,
-            isRecurring = dream.isRecurring
+            isRecurring = dream.isRecurring,
+            tagsInput = dream.tags.joinToString(", ")
         )
     }
 
@@ -134,9 +140,14 @@ data class DreamEntryUiState(
     val lucidity: Float = 5f,
     val intensity: Float = 5f,
     val emotion: Float = 5f,
-    val isRecurring: Boolean = false
+    val isRecurring: Boolean = false,
+    val tagsInput: String = ""
 ) {
     val isEditing: Boolean = dreamId != null
+    val tags: List<String>
+        get() = tagsInput.split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
 }
 
 enum class DreamListMode {

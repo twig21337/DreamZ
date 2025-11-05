@@ -8,5 +8,6 @@ data class Dream(
     val lucidity: Float,
     val intensity: Float,
     val emotion: Float,
-    val isRecurring: Boolean
+    val isRecurring: Boolean,
+    val tags: List<String>
 )
