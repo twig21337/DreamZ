@@ -1,0 +1,147 @@
+package com.twig.dreamzversion3.ui.dreams
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Hotel
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.twig.dreamzversion3.R
+import com.twig.dreamzversion3.model.dream.Dream
+
+@Composable
+fun DreamsListRoute(
+    onAddDream: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: DreamsViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    DreamsListScreen(
+        dreams = uiState.dreams,
+        onAddDream = onAddDream,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun DreamsListScreen(
+    dreams: List<Dream>,
+    onAddDream: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(title = { Text(text = stringResource(id = R.string.dreams_tab_label)) })
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddDream) {
+                Icon(imageVector = Icons.Outlined.Add, contentDescription = stringResource(id = R.string.add_dream_fab))
+            }
+        }
+    ) { innerPadding ->
+        if (dreams.isEmpty()) {
+            EmptyDreamsState(modifier = Modifier.padding(innerPadding))
+        } else {
+            DreamsList(
+                dreams = dreams,
+                contentPadding = innerPadding
+            )
+        }
+    }
+}
+
+@Composable
+private fun DreamsList(
+    dreams: List<Dream>,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(dreams, key = { it.id }) { dream ->
+            ListItem(
+                headlineContent = { Text(text = dream.title, style = MaterialTheme.typography.titleMedium) },
+                supportingContent = {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (dream.description.isNotBlank()) {
+                            Text(text = dream.description, maxLines = 2)
+                        }
+                        Text(
+                            text = stringResource(
+                                id = R.string.lucidity_label,
+                                dream.lucidity.toInt()
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                },
+                trailingContent = {
+                    DreamRecurringIcon(isRecurring = dream.isRecurring)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DreamRecurringIcon(isRecurring: Boolean) {
+    if (isRecurring) {
+        Icon(
+            imageVector = Icons.Outlined.Refresh,
+            contentDescription = stringResource(id = R.string.recurring_dream_content_description)
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Outlined.Hotel,
+            contentDescription = stringResource(id = R.string.standard_dream_content_description)
+        )
+    }
+}
+
+@Composable
+private fun EmptyDreamsState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(id = R.string.empty_dreams_title),
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = stringResource(id = R.string.empty_dreams_body),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 8.dp),
+            textAlign = TextAlign.Center
+        )
+    }
+}

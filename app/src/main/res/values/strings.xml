@@ -4,4 +4,19 @@
     <string name="dream_signs_tab_label">Dream Signs</string>
     <string name="settings_tab_label">Settings</string>
     <string name="account_tab_label">Account</string>
+    <string name="add_dream_fab">Add dream</string>
+    <string name="recurring_dream_content_description">Recurring dream</string>
+    <string name="standard_dream_content_description">Dream</string>
+    <string name="empty_dreams_title">Your dream journal is empty</string>
+    <string name="empty_dreams_body">Start by adding your first dream entry.</string>
+    <string name="add_dream_title">Add dream</string>
+    <string name="cd_navigate_back">Navigate back</string>
+    <string name="dream_title_label">Title</string>
+    <string name="dream_description_label">Description</string>
+    <string name="dream_description_support">Describe what happened in as much detail as you like.</string>
+    <string name="lucidity_label">Lucidity: %1$d / 10</string>
+    <string name="recurring_dream_label">Recurring dream</string>
+    <string name="recurring_dream_hint">Toggle on if this dream happens regularly.</string>
+    <string name="save_dream_cta">Save dream</string>
+    <string name="cancel_label">Cancel</string>
 </resources>
