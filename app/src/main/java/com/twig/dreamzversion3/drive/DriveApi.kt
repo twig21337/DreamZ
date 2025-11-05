@@ -1,9 +1,11 @@
 package com.twig.dreamzversion3.drive
 
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Headers
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType.Companion.toMediaType
 import java.net.URLEncoder
 
 private val client = OkHttpClient()
@@ -65,6 +67,54 @@ fun upsertJsonFile(token: String, parentId: String, name: String, jsonContent: S
         append(jsonContent).append("\r\n")
         append("--$boundary--\r\n")
     }.toRequestBody("multipart/related; boundary=$boundary".toMediaType())
+
+    val url = if (existingId != null)
+        "$UPLOAD_BASE/$existingId?uploadType=multipart"
+    else
+        "$UPLOAD_BASE?uploadType=multipart"
+
+    val req = Request.Builder()
+        .url(url)
+        .post(multipart)
+        .auth(token)
+        .build()
+
+    client.newCall(req).execute().use { resp ->
+        if (!resp.isSuccessful) error("Drive upsert failed: ${resp.code} ${resp.message}")
+    }
+}
+
+fun upsertBinaryFile(
+    token: String,
+    parentId: String,
+    name: String,
+    mimeType: String,
+    data: ByteArray
+) {
+    val q = "'$parentId' in parents and name='${name.replace("'", "\\'")}' and trashed=false"
+    val listReq = Request.Builder()
+        .url("$DRIVE_BASE/files?q=${URLEncoder.encode(q, "UTF-8")}&fields=files(id)")
+        .auth(token)
+        .build()
+    val existingId = client.newCall(listReq).execute().use { resp ->
+        if (!resp.isSuccessful) error("Drive list (binary upsert) failed: ${resp.code}")
+        val body = resp.body?.string().orEmpty()
+        Regex("\"id\"\\s*:\\s*\"([^\"]+)\"").find(body)?.groupValues?.get(1)
+    }
+
+    val meta = """{"name":"$name","parents":["$parentId"]}"""
+    val boundary = "boundary${System.currentTimeMillis()}"
+    val multipart = MultipartBody.Builder(boundary)
+        .setType("multipart/related".toMediaType())
+        .addPart(
+            Headers.headersOf("Content-Type", "application/json; charset=utf-8"),
+            meta.toRequestBody("application/json; charset=utf-8".toMediaType())
+        )
+        .addPart(
+            Headers.headersOf("Content-Type", mimeType),
+            data.toRequestBody(mimeType.toMediaType())
+        )
+        .build()
 
     val url = if (existingId != null)
         "$UPLOAD_BASE/$existingId?uploadType=multipart"

@@ -23,12 +23,14 @@ private data class DreamContext(
 
 internal fun buildDreamSignCandidates(
     dreams: List<Dream>,
+    blacklist: Set<String> = emptySet(),
     maxItems: Int = 40
 ): List<DreamSignCandidate> {
     if (dreams.isEmpty()) return emptyList()
 
     val candidateMap = mutableMapOf<String, MutableDreamSignCandidate>()
-    val contexts = dreams.map { it.toContext() }
+    val combinedStopwords = dreamSignStopwords + blacklist
+    val contexts = dreams.map { it.toContext(combinedStopwords) }
 
     val descriptionTexts = dreams.mapNotNull { dream ->
         dream.description.takeIf { it.isNotBlank() }
@@ -37,7 +39,7 @@ internal fun buildDreamSignCandidates(
         val extracted = extractDreamsigns(descriptionTexts, topK = maxItems * 2)
         extracted.forEach { sign ->
             val key = sign.text.lowercase()
-            if (!key.isValidCandidate()) return@forEach
+            if (!key.isValidCandidate(combinedStopwords, blacklist)) return@forEach
             val display = sign.text
                 .split(" ")
                 .filter { it.isNotBlank() }
@@ -70,7 +72,7 @@ internal fun buildDreamSignCandidates(
             val tag = rawTag.trim()
             if (tag.isNotEmpty()) {
                 val key = tag.lowercase()
-                if (!key.isValidCandidate()) return@forEach
+                if (!key.isValidCandidate(combinedStopwords, blacklist)) return@forEach
                 val candidate = candidateMap.getOrPut(key) {
                     MutableDreamSignCandidate(
                         key = key,
@@ -101,15 +103,15 @@ internal fun buildDreamSignCandidates(
         }
 }
 
-private fun Dream.toContext(): DreamContext {
+private fun Dream.toContext(stopwords: Set<String>): DreamContext {
     if (description.isBlank()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
     val tokens = normalize(description)
-    val filtered = tokens.filterNot { it in dreamSignStopwords }
+    val filtered = tokens.filterNot { it in stopwords }
     if (filtered.isEmpty()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
     val features = mutableSetOf<String>()
     filtered.forEach { features += it }
     filtered.zipWithNext { a, b ->
-        if (a !in dreamSignStopwords && b !in dreamSignStopwords) {
+        if (a !in stopwords && b !in stopwords) {
             features += "$a $b"
         }
     }
@@ -122,9 +124,11 @@ private fun normalize(text: String): List<String> =
         .split(Regex("\\s+"))
         .filter { it.isNotBlank() }
 
-private fun String.isValidCandidate(): Boolean {
+private fun String.isValidCandidate(stopwords: Set<String>, blacklist: Set<String>): Boolean {
     val tokens = split(" ").filter { it.isNotBlank() }
     if (tokens.isEmpty()) return false
-    val remaining = tokens.filterNot { it in dreamSignStopwords }
+    val normalized = tokens.joinToString(" ") { it.lowercase() }
+    if (normalized in blacklist) return false
+    val remaining = tokens.filterNot { it.lowercase() in stopwords }
     return remaining.isNotEmpty()
 }

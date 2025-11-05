@@ -9,5 +9,7 @@ data class Dream(
     val intensity: Float,
     val emotion: Float,
     val isRecurring: Boolean,
-    val tags: List<String>
+    val tags: List<String>,
+    val createdAt: Long,
+    val updatedAt: Long? = null
 )

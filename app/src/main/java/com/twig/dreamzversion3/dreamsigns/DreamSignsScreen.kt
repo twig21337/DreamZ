@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AssistChip
@@ -22,11 +24,15 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,24 +41,39 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.R
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
+import com.twig.dreamzversion3.data.dream.DreamRepositories
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun DreamSignsRoute(viewModel: DreamSignsViewModel = viewModel()) {
+fun DreamSignsRoute() {
+    val preferences = LocalUserPreferencesRepository.current
+    val viewModel: DreamSignsViewModel = viewModel(
+        factory = DreamSignsViewModel.factory(
+            repository = DreamRepositories.inMemory,
+            preferences = preferences
+        )
+    )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DreamSignsScreen(
         uiState = uiState,
         onPromoteSign = viewModel::promoteSign,
-        onRemovePromotedSign = viewModel::removePromotedSign
+        onRemovePromotedSign = viewModel::removePromotedSign,
+        onBlacklistSign = viewModel::addToBlacklist,
+        onRemoveBlacklistedSign = viewModel::removeFromBlacklist
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DreamSignsScreen(
     uiState: DreamSignsUiState,
     onPromoteSign: (String) -> Unit,
     onRemovePromotedSign: (String) -> Unit,
+    onBlacklistSign: (String) -> Unit,
+    onRemoveBlacklistedSign: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -64,6 +85,7 @@ fun DreamSignsScreen(
         if (!uiState.hasDreams) {
             DreamSignsEmptyState(modifier = Modifier.padding(innerPadding))
         } else {
+            var blacklistInput by rememberSaveable { mutableStateOf("") }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -71,6 +93,75 @@ fun DreamSignsScreen(
                 contentPadding = PaddingValues(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item(key = "blacklist_header") {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = stringResource(id = R.string.dream_signs_blacklist_section_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = stringResource(id = R.string.dream_signs_blacklist_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                item(key = "blacklist_input") {
+                    OutlinedTextField(
+                        value = blacklistInput,
+                        onValueChange = { blacklistInput = it },
+                        label = { Text(text = stringResource(id = R.string.dream_signs_blacklist_input_label)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    val value = blacklistInput.trim()
+                                    if (value.isNotEmpty()) {
+                                        onBlacklistSign(value)
+                                        blacklistInput = ""
+                                    }
+                                },
+                                enabled = blacklistInput.isNotBlank()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Add,
+                                    contentDescription = stringResource(id = R.string.dream_signs_add_blacklist_cd)
+                                )
+                            }
+                        }
+                    )
+                }
+                item(key = "blacklist_list") {
+                    if (uiState.blacklistedSigns.isEmpty()) {
+                        Text(
+                            text = stringResource(id = R.string.dream_signs_blacklist_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.blacklistedSigns.forEach { term ->
+                                AssistChip(
+                                    onClick = { onRemoveBlacklistedSign(term) },
+                                    label = { Text(text = term) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Close,
+                                            contentDescription = stringResource(
+                                                id = R.string.dream_signs_remove_blacklist_cd,
+                                                term
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
                 item(key = "promoted_header") {
                     Text(
                         text = stringResource(id = R.string.dream_signs_promoted_section_title),
@@ -115,6 +206,7 @@ fun DreamSignsScreen(
                         DreamSignCandidateCard(
                             sign = sign,
                             onPromote = onPromoteSign,
+                            onBlacklist = onBlacklistSign,
                             maxCount = uiState.maxCount
                         )
                     }
@@ -216,6 +308,7 @@ private fun PromotedDreamSignCard(
 private fun DreamSignCandidateCard(
     sign: DreamSignCandidate,
     onPromote: (String) -> Unit,
+    onBlacklist: (String) -> Unit,
     maxCount: Int,
     modifier: Modifier = Modifier
 ) {
@@ -242,6 +335,15 @@ private fun DreamSignCandidateCard(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(text = stringResource(id = R.string.dream_signs_promote_button))
+                }
+                IconButton(onClick = { onBlacklist(sign.key) }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Block,
+                        contentDescription = stringResource(
+                            id = R.string.dream_signs_blacklist_candidate_cd,
+                            sign.displayText
+                        )
+                    )
                 }
             }
             DreamSignFrequency(count = sign.count, maxCount = maxCount)

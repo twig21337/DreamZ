@@ -73,6 +73,8 @@ class DreamsViewModel(
             return
         }
 
+        val now = System.currentTimeMillis()
+        val createdAt = entry.createdAt ?: now
         val dream = Dream(
             id = entry.dreamId ?: UUID.randomUUID().toString(),
             title = entry.title.ifBlank { "Untitled Dream" },
@@ -82,7 +84,9 @@ class DreamsViewModel(
             intensity = entry.intensity,
             emotion = entry.emotion,
             isRecurring = entry.isRecurring,
-            tags = entry.tags
+            tags = entry.tags,
+            createdAt = createdAt,
+            updatedAt = if (entry.isEditing) now else entry.updatedAt
         )
 
         if (entry.isEditing) {
@@ -112,7 +116,9 @@ class DreamsViewModel(
             intensity = dream.intensity,
             emotion = dream.emotion,
             isRecurring = dream.isRecurring,
-            tagsInput = dream.tags.joinToString(", ")
+            tagsInput = dream.tags.joinToString(", "),
+            createdAt = dream.createdAt,
+            updatedAt = dream.updatedAt
         )
     }
 
@@ -141,7 +147,9 @@ data class DreamEntryUiState(
     val intensity: Float = 5f,
     val emotion: Float = 5f,
     val isRecurring: Boolean = false,
-    val tagsInput: String = ""
+    val tagsInput: String = "",
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
 ) {
     val isEditing: Boolean = dreamId != null
     val tags: List<String>

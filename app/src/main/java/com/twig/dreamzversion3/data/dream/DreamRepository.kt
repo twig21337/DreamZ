@@ -11,6 +11,7 @@ interface DreamRepository {
     fun addDream(dream: Dream)
     fun updateDream(dream: Dream)
     fun getDream(id: String): Dream?
+    fun getDreams(): List<Dream>
 }
 
 class InMemoryDreamRepository : DreamRepository {
@@ -29,6 +30,10 @@ class InMemoryDreamRepository : DreamRepository {
 
     override fun getDream(id: String): Dream? {
         return _dreams.value.firstOrNull { it.id == id }
+    }
+
+    override fun getDreams(): List<Dream> {
+        return _dreams.value
     }
 }
 
