@@ -7,9 +7,9 @@ import com.twig.dreamzversion3.data.dream.DreamRepository
 import com.twig.dreamzversion3.model.dream.Dream
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -20,12 +20,15 @@ class DreamsViewModel(
 
     private val _dreamEntryState = MutableStateFlow(DreamEntryUiState())
     private val dreamEntryState: StateFlow<DreamEntryUiState> = _dreamEntryState.asStateFlow()
+    private val _listMode = MutableStateFlow(DreamListMode.Card)
+    private val listMode: StateFlow<DreamListMode> = _listMode.asStateFlow()
 
     val uiState: StateFlow<DreamsUiState> = combine(
         repository.dreams,
-        dreamEntryState
-    ) { dreams, entry ->
-        DreamsUiState(dreams = dreams, entry = entry)
+        dreamEntryState,
+        listMode
+    ) { dreams, entry, mode ->
+        DreamsUiState(dreams = dreams, entry = entry, listMode = mode)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -106,11 +109,21 @@ class DreamsViewModel(
             isRecurring = dream.isRecurring
         )
     }
+
+    fun toggleListMode() {
+        _listMode.update { current ->
+            when (current) {
+                DreamListMode.List -> DreamListMode.Card
+                DreamListMode.Card -> DreamListMode.List
+            }
+        }
+    }
 }
 
 data class DreamsUiState(
     val dreams: List<Dream> = emptyList(),
-    val entry: DreamEntryUiState = DreamEntryUiState()
+    val entry: DreamEntryUiState = DreamEntryUiState(),
+    val listMode: DreamListMode = DreamListMode.Card
 )
 
 data class DreamEntryUiState(
@@ -124,4 +137,9 @@ data class DreamEntryUiState(
     val isRecurring: Boolean = false
 ) {
     val isEditing: Boolean = dreamId != null
+}
+
+enum class DreamListMode {
+    List,
+    Card
 }

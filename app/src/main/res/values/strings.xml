@@ -24,4 +24,6 @@
     <string name="recurring_dream_hint">Toggle on if this dream happens regularly.</string>
     <string name="save_dream_cta">Save dream</string>
     <string name="cancel_label">Cancel</string>
+    <string name="dream_toggle_to_card_view">Show detailed cards</string>
+    <string name="dream_toggle_to_list_view">Show compact list</string>
 </resources>
