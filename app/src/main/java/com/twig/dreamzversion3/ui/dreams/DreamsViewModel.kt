@@ -40,8 +40,20 @@ class DreamsViewModel(
         _dreamEntryState.update { it.copy(description = description) }
     }
 
+    fun onMoodChange(mood: String) {
+        _dreamEntryState.update { it.copy(mood = mood) }
+    }
+
     fun onLucidityChange(lucidity: Float) {
         _dreamEntryState.update { it.copy(lucidity = lucidity) }
+    }
+
+    fun onIntensityChange(intensity: Float) {
+        _dreamEntryState.update { it.copy(intensity = intensity) }
+    }
+
+    fun onEmotionChange(emotion: Float) {
+        _dreamEntryState.update { it.copy(emotion = emotion) }
     }
 
     fun onRecurringChange(isRecurring: Boolean) {
@@ -54,21 +66,45 @@ class DreamsViewModel(
             return
         }
 
-        repository.addDream(
-            Dream(
-                id = UUID.randomUUID().toString(),
-                title = entry.title.ifBlank { "Untitled Dream" },
-                description = entry.description,
-                lucidity = entry.lucidity,
-                isRecurring = entry.isRecurring
-            )
+        val dream = Dream(
+            id = entry.dreamId ?: UUID.randomUUID().toString(),
+            title = entry.title.ifBlank { "Untitled Dream" },
+            description = entry.description,
+            mood = entry.mood,
+            lucidity = entry.lucidity,
+            intensity = entry.intensity,
+            emotion = entry.emotion,
+            isRecurring = entry.isRecurring
         )
+
+        if (entry.isEditing) {
+            repository.updateDream(dream)
+        } else {
+            repository.addDream(dream)
+        }
         resetEntry()
         onSaved()
     }
 
     fun resetEntry() {
         _dreamEntryState.value = DreamEntryUiState()
+    }
+
+    fun startEditing(dreamId: String) {
+        if (dreamEntryState.value.dreamId == dreamId) {
+            return
+        }
+        val dream = repository.getDream(dreamId) ?: return
+        _dreamEntryState.value = DreamEntryUiState(
+            dreamId = dream.id,
+            title = dream.title,
+            description = dream.description,
+            mood = dream.mood,
+            lucidity = dream.lucidity,
+            intensity = dream.intensity,
+            emotion = dream.emotion,
+            isRecurring = dream.isRecurring
+        )
     }
 }
 
@@ -78,8 +114,14 @@ data class DreamsUiState(
 )
 
 data class DreamEntryUiState(
+    val dreamId: String? = null,
     val title: String = "",
     val description: String = "",
+    val mood: String = "",
     val lucidity: Float = 5f,
+    val intensity: Float = 5f,
+    val emotion: Float = 5f,
     val isRecurring: Boolean = false
-)
+) {
+    val isEditing: Boolean = dreamId != null
+}

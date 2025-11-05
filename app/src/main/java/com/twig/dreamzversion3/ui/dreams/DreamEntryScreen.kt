@@ -24,6 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,10 +38,18 @@ import com.twig.dreamzversion3.R
 @Composable
 fun DreamEntryRoute(
     onNavigateBack: () -> Unit,
+    dreamId: String? = null,
     modifier: Modifier = Modifier,
     viewModel: DreamsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(dreamId) {
+        if (dreamId != null) {
+            viewModel.startEditing(dreamId)
+        } else {
+            viewModel.resetEntry()
+        }
+    }
     DisposableEffect(viewModel) {
         onDispose {
             viewModel.resetEntry()
@@ -50,7 +59,10 @@ fun DreamEntryRoute(
         entryState = uiState.entry,
         onTitleChange = viewModel::onTitleChange,
         onDescriptionChange = viewModel::onDescriptionChange,
+        onMoodChange = viewModel::onMoodChange,
         onLucidityChange = viewModel::onLucidityChange,
+        onIntensityChange = viewModel::onIntensityChange,
+        onEmotionChange = viewModel::onEmotionChange,
         onRecurringChange = viewModel::onRecurringChange,
         onSave = { viewModel.saveDream(onSaved = onNavigateBack) },
         onCancel = {
@@ -67,7 +79,10 @@ fun DreamEntryScreen(
     entryState: DreamEntryUiState,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onMoodChange: (String) -> Unit,
     onLucidityChange: (Float) -> Unit,
+    onIntensityChange: (Float) -> Unit,
+    onEmotionChange: (Float) -> Unit,
     onRecurringChange: (Boolean) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
@@ -77,7 +92,14 @@ fun DreamEntryScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(id = R.string.add_dream_title)) },
+                title = {
+                    val title = if (entryState.isEditing) {
+                        stringResource(id = R.string.edit_dream_title)
+                    } else {
+                        stringResource(id = R.string.add_dream_title)
+                    }
+                    Text(text = title)
+                },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
                         Icon(
@@ -112,15 +134,27 @@ fun DreamEntryScreen(
                 supportingText = { Text(text = stringResource(id = R.string.dream_description_support)) },
                 minLines = 4
             )
-            Column {
-                Text(text = stringResource(id = R.string.lucidity_label, entryState.lucidity.toInt()))
-                Slider(
-                    value = entryState.lucidity,
-                    onValueChange = onLucidityChange,
-                    valueRange = 0f..10f,
-                    steps = 9
-                )
-            }
+            OutlinedTextField(
+                value = entryState.mood,
+                onValueChange = onMoodChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = stringResource(id = R.string.dream_mood_label)) }
+            )
+            EntrySlider(
+                label = stringResource(id = R.string.lucidity_label, entryState.lucidity.toInt()),
+                value = entryState.lucidity,
+                onValueChange = onLucidityChange
+            )
+            EntrySlider(
+                label = stringResource(id = R.string.dream_intensity_label, entryState.intensity.toInt()),
+                value = entryState.intensity,
+                onValueChange = onIntensityChange
+            )
+            EntrySlider(
+                label = stringResource(id = R.string.dream_emotion_label, entryState.emotion.toInt()),
+                value = entryState.emotion,
+                onValueChange = onEmotionChange
+            )
             RowWithSwitch(
                 checked = entryState.isRecurring,
                 onCheckedChange = onRecurringChange
@@ -171,6 +205,24 @@ private fun RowWithSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             modifier = Modifier.padding(start = 16.dp)
+        )
+    }
+}
+
+@Composable
+private fun EntrySlider(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(text = label)
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = 0f..10f,
+            steps = 9
         )
     }
 }

@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.update
 interface DreamRepository {
     val dreams: StateFlow<List<Dream>>
     fun addDream(dream: Dream)
+    fun updateDream(dream: Dream)
+    fun getDream(id: String): Dream?
 }
 
 class InMemoryDreamRepository : DreamRepository {
@@ -17,6 +19,16 @@ class InMemoryDreamRepository : DreamRepository {
 
     override fun addDream(dream: Dream) {
         _dreams.update { current -> current + dream }
+    }
+
+    override fun updateDream(dream: Dream) {
+        _dreams.update { current ->
+            current.map { existing -> if (existing.id == dream.id) dream else existing }
+        }
+    }
+
+    override fun getDream(id: String): Dream? {
+        return _dreams.value.firstOrNull { it.id == id }
     }
 }
 

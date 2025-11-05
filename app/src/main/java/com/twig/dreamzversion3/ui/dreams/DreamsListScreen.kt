@@ -1,8 +1,10 @@
 package com.twig.dreamzversion3.ui.dreams
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,6 +37,7 @@ import com.twig.dreamzversion3.model.dream.Dream
 @Composable
 fun DreamsListRoute(
     onAddDream: () -> Unit,
+    onDreamSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DreamsViewModel = viewModel()
 ) {
@@ -42,6 +45,7 @@ fun DreamsListRoute(
     DreamsListScreen(
         dreams = uiState.dreams,
         onAddDream = onAddDream,
+        onDreamSelected = onDreamSelected,
         modifier = modifier
     )
 }
@@ -51,6 +55,7 @@ fun DreamsListRoute(
 fun DreamsListScreen(
     dreams: List<Dream>,
     onAddDream: () -> Unit,
+    onDreamSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -69,7 +74,8 @@ fun DreamsListScreen(
         } else {
             DreamsList(
                 dreams = dreams,
-                contentPadding = innerPadding
+                contentPadding = innerPadding,
+                onDreamSelected = onDreamSelected
             )
         }
     }
@@ -79,6 +85,7 @@ fun DreamsListScreen(
 private fun DreamsList(
     dreams: List<Dream>,
     contentPadding: PaddingValues,
+    onDreamSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -88,16 +95,39 @@ private fun DreamsList(
     ) {
         items(dreams, key = { it.id }) { dream ->
             ListItem(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onDreamSelected(dream.id) },
                 headlineContent = { Text(text = dream.title, style = MaterialTheme.typography.titleMedium) },
                 supportingContent = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         if (dream.description.isNotBlank()) {
                             Text(text = dream.description, maxLines = 2)
                         }
+                        if (dream.mood.isNotBlank()) {
+                            Text(
+                                text = stringResource(id = R.string.dream_mood_value, dream.mood),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                         Text(
                             text = stringResource(
                                 id = R.string.lucidity_label,
                                 dream.lucidity.toInt()
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = stringResource(
+                                id = R.string.dream_intensity_label,
+                                dream.intensity.toInt()
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = stringResource(
+                                id = R.string.dream_emotion_label,
+                                dream.emotion.toInt()
                             ),
                             style = MaterialTheme.typography.bodySmall
                         )
