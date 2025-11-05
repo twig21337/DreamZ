@@ -12,10 +12,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Hotel
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material.icons.outlined.ViewList
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -129,11 +129,23 @@ private fun DreamsTitleList(
                     .fillMaxWidth()
                     .clickable { onDreamSelected(dream.id) }
             ) {
-                Text(
-                    text = dream.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = dream.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    DreamStatusIcons(
+                        isLucid = dream.isLucid,
+                        isRecurring = dream.isRecurring
+                    )
+                }
             }
         }
     }
@@ -172,7 +184,10 @@ private fun DreamsDetailList(
                             style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.weight(1f)
                         )
-                        DreamRecurringIcon(isRecurring = dream.isRecurring)
+                        DreamStatusIcons(
+                            isLucid = dream.isLucid,
+                            isRecurring = dream.isRecurring
+                        )
                     }
                     if (dream.description.isNotBlank()) {
                         Text(text = dream.description)
@@ -194,13 +209,6 @@ private fun DreamsDetailList(
                     }
                     Text(
                         text = stringResource(
-                            id = R.string.lucidity_label,
-                            dream.lucidity.toInt()
-                        ),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Text(
-                        text = stringResource(
                             id = R.string.dream_intensity_label,
                             dream.intensity.toInt()
                         ),
@@ -220,17 +228,29 @@ private fun DreamsDetailList(
 }
 
 @Composable
-private fun DreamRecurringIcon(isRecurring: Boolean) {
-    if (isRecurring) {
-        Icon(
-            imageVector = Icons.Outlined.Refresh,
-            contentDescription = stringResource(id = R.string.recurring_dream_content_description)
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Outlined.Hotel,
-            contentDescription = stringResource(id = R.string.standard_dream_content_description)
-        )
+private fun DreamStatusIcons(
+    isLucid: Boolean,
+    isRecurring: Boolean,
+    modifier: Modifier = Modifier
+) {
+    if (!isLucid && !isRecurring) return
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isLucid) {
+            Icon(
+                imageVector = Icons.Outlined.Visibility,
+                contentDescription = stringResource(id = R.string.lucid_dream_content_description)
+            )
+        }
+        if (isRecurring) {
+            Icon(
+                imageVector = Icons.Outlined.Refresh,
+                contentDescription = stringResource(id = R.string.recurring_dream_content_description)
+            )
+        }
     }
 }
 

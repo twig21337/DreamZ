@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,7 +62,7 @@ fun DreamEntryRoute(
         onDescriptionChange = viewModel::onDescriptionChange,
         onMoodChange = viewModel::onMoodChange,
         onTagsInputChange = viewModel::onTagsInputChange,
-        onLucidityChange = viewModel::onLucidityChange,
+        onLucidChange = viewModel::onLucidChange,
         onIntensityChange = viewModel::onIntensityChange,
         onEmotionChange = viewModel::onEmotionChange,
         onRecurringChange = viewModel::onRecurringChange,
@@ -82,7 +83,7 @@ fun DreamEntryScreen(
     onDescriptionChange: (String) -> Unit,
     onMoodChange: (String) -> Unit,
     onTagsInputChange: (String) -> Unit,
-    onLucidityChange: (Float) -> Unit,
+    onLucidChange: (Boolean) -> Unit,
     onIntensityChange: (Float) -> Unit,
     onEmotionChange: (Float) -> Unit,
     onRecurringChange: (Boolean) -> Unit,
@@ -149,10 +150,9 @@ fun DreamEntryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(id = R.string.dream_mood_label)) }
             )
-            EntrySlider(
-                label = stringResource(id = R.string.lucidity_label, entryState.lucidity.toInt()),
-                value = entryState.lucidity,
-                onValueChange = onLucidityChange
+            LucidDreamCheckbox(
+                checked = entryState.isLucid,
+                onCheckedChange = onLucidChange
             )
             EntrySlider(
                 label = stringResource(id = R.string.dream_intensity_label, entryState.intensity.toInt()),
@@ -215,6 +215,35 @@ private fun RowWithSwitch(
             onCheckedChange = onCheckedChange,
             modifier = Modifier.padding(start = 16.dp)
         )
+    }
+}
+
+@Composable
+private fun LucidDreamCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = stringResource(id = R.string.lucid_dream_label),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = stringResource(id = R.string.lucid_dream_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

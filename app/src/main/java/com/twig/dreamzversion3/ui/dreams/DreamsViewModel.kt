@@ -51,8 +51,8 @@ class DreamsViewModel(
         _dreamEntryState.update { it.copy(tagsInput = tags) }
     }
 
-    fun onLucidityChange(lucidity: Float) {
-        _dreamEntryState.update { it.copy(lucidity = lucidity) }
+    fun onLucidChange(isLucid: Boolean) {
+        _dreamEntryState.update { it.copy(isLucid = isLucid) }
     }
 
     fun onIntensityChange(intensity: Float) {
@@ -78,7 +78,7 @@ class DreamsViewModel(
             title = entry.title.ifBlank { "Untitled Dream" },
             description = entry.description,
             mood = entry.mood,
-            lucidity = entry.lucidity,
+            isLucid = entry.isLucid,
             intensity = entry.intensity,
             emotion = entry.emotion,
             isRecurring = entry.isRecurring,
@@ -108,7 +108,7 @@ class DreamsViewModel(
             title = dream.title,
             description = dream.description,
             mood = dream.mood,
-            lucidity = dream.lucidity,
+            isLucid = dream.isLucid,
             intensity = dream.intensity,
             emotion = dream.emotion,
             isRecurring = dream.isRecurring,
@@ -137,7 +137,7 @@ data class DreamEntryUiState(
     val title: String = "",
     val description: String = "",
     val mood: String = "",
-    val lucidity: Float = 5f,
+    val isLucid: Boolean = false,
     val intensity: Float = 5f,
     val emotion: Float = 5f,
     val isRecurring: Boolean = false,

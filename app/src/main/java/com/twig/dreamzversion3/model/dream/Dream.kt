@@ -5,7 +5,7 @@ data class Dream(
     val title: String,
     val description: String,
     val mood: String,
-    val lucidity: Float,
+    val isLucid: Boolean,
     val intensity: Float,
     val emotion: Float,
     val isRecurring: Boolean,

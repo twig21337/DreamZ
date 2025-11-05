@@ -6,18 +6,22 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.Button
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -26,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,15 +71,27 @@ fun DreamSignsScreen(
                 contentPadding = PaddingValues(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                if (uiState.promotedSigns.isNotEmpty()) {
-                    item(key = "promoted_header") {
+                item(key = "promoted_header") {
+                    Text(
+                        text = stringResource(id = R.string.dream_signs_promoted_section_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                if (uiState.promotedSigns.isEmpty()) {
+                    item(key = "promoted_empty") {
                         Text(
-                            text = stringResource(id = R.string.dream_signs_promoted_section_title),
-                            style = MaterialTheme.typography.titleMedium
+                            text = stringResource(id = R.string.dream_signs_promoted_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                } else {
                     items(uiState.promotedSigns, key = { it.key }) { sign ->
-                        PromotedDreamSignCard(sign = sign, onRemove = onRemovePromotedSign)
+                        PromotedDreamSignCard(
+                            sign = sign,
+                            onRemove = onRemovePromotedSign,
+                            maxCount = uiState.maxCount
+                        )
                     }
                 }
 
@@ -95,7 +112,11 @@ fun DreamSignsScreen(
                     }
                 } else {
                     items(uiState.candidateSigns, key = { it.key }) { sign ->
-                        DreamSignCandidateCard(sign = sign, onPromote = onPromoteSign)
+                        DreamSignCandidateCard(
+                            sign = sign,
+                            onPromote = onPromoteSign,
+                            maxCount = uiState.maxCount
+                        )
                     }
                 }
             }
@@ -129,6 +150,7 @@ private fun DreamSignsEmptyState(modifier: Modifier = Modifier) {
 private fun PromotedDreamSignCard(
     sign: DreamSignCandidate,
     onRemove: (String) -> Unit,
+    maxCount: Int,
     modifier: Modifier = Modifier
 ) {
     OutlinedCard(modifier = modifier.fillMaxWidth()) {
@@ -144,14 +166,33 @@ private fun PromotedDreamSignCard(
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = sign.displayText, style = MaterialTheme.typography.titleMedium)
-                if (sign.count > 0) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = stringResource(id = R.string.dream_signs_frequency_count, sign.count),
-                        style = MaterialTheme.typography.bodyMedium
+                        text = sign.displayText,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = { Text(text = stringResource(id = R.string.dream_signs_promoted_chip)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     )
                 }
+                DreamSignFrequency(count = sign.count, maxCount = maxCount)
+                DreamSignContextText(sign = sign)
                 Text(
                     text = stringResource(id = sign.sourceDescriptionRes()),
                     style = MaterialTheme.typography.bodySmall,
@@ -175,6 +216,7 @@ private fun PromotedDreamSignCard(
 private fun DreamSignCandidateCard(
     sign: DreamSignCandidate,
     onPromote: (String) -> Unit,
+    maxCount: Int,
     modifier: Modifier = Modifier
 ) {
     OutlinedCard(modifier = modifier.fillMaxWidth()) {
@@ -182,23 +224,97 @@ private fun DreamSignCandidateCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(text = sign.displayText, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = stringResource(id = R.string.dream_signs_frequency_count, sign.count),
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = sign.displayText,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                OutlinedButton(
+                    onClick = { onPromote(sign.key) },
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(text = stringResource(id = R.string.dream_signs_promote_button))
+                }
+            }
+            DreamSignFrequency(count = sign.count, maxCount = maxCount)
+            DreamSignContextText(sign = sign)
             Text(
                 text = stringResource(id = sign.sourceDescriptionRes()),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Button(onClick = { onPromote(sign.key) }) {
-                Text(text = stringResource(id = R.string.dream_signs_promote_button))
-            }
         }
     }
+}
+
+@Composable
+private fun DreamSignFrequency(
+    count: Int,
+    maxCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        AssistChip(
+            onClick = {},
+            enabled = false,
+            label = { Text(text = stringResource(id = R.string.dream_signs_frequency_chip, count)) },
+            colors = AssistChipDefaults.assistChipColors(
+                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                disabledLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        )
+        if (maxCount > 0) {
+            LinearProgressIndicator(
+                progress = (count.coerceAtMost(maxCount)).toFloat() / maxCount.toFloat(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+            )
+        }
+        Text(
+            text = stringResource(id = R.string.dream_signs_frequency_caption, count),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun DreamSignContextText(sign: DreamSignCandidate, modifier: Modifier = Modifier) {
+    val uniqueTitles = sign.dreamTitles.distinct()
+    val displayedTitles = uniqueTitles.take(3)
+    val titlesText = displayedTitles.joinToString(", ")
+    val baseText = when {
+        uniqueTitles.isEmpty() -> stringResource(id = R.string.dream_signs_seen_in_none)
+        uniqueTitles.size == 1 -> stringResource(
+            id = R.string.dream_signs_seen_in_single,
+            uniqueTitles.size,
+            titlesText
+        )
+        else -> stringResource(
+            id = R.string.dream_signs_seen_in,
+            uniqueTitles.size,
+            titlesText
+        )
+    }
+    val text = if (uniqueTitles.size > displayedTitles.size) "$baseText…" else baseText
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+    )
 }
 
 private fun DreamSignCandidate.sourceDescriptionRes(): Int {

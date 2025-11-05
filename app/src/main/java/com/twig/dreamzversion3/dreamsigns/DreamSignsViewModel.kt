@@ -24,19 +24,24 @@ class DreamSignsViewModel(
         promotedKeys
     ) { dreams, promoted ->
         val candidates = buildDreamSignCandidates(dreams)
+        val candidatesByKey = candidates.associateBy { it.key }
         val promotedCandidates = promoted.map { key ->
-            candidates.firstOrNull { it.key == key } ?: DreamSignCandidate(
+            candidatesByKey[key] ?: DreamSignCandidate(
                 key = key,
                 displayText = key.toDisplayName(),
                 count = 0,
-                sources = emptySet()
+                sources = emptySet(),
+                dreamTitles = emptyList()
             )
         }
         val remainingCandidates = candidates.filterNot { candidate -> candidate.key in promoted }
+        val allCandidates = promotedCandidates + remainingCandidates
+        val maxCount = allCandidates.maxOfOrNull { it.count } ?: 0
         DreamSignsUiState(
             hasDreams = dreams.isNotEmpty(),
             promotedSigns = promotedCandidates,
-            candidateSigns = remainingCandidates
+            candidateSigns = remainingCandidates,
+            maxCount = maxCount
         )
     }.stateIn(
         scope = viewModelScope,
@@ -70,13 +75,15 @@ data class DreamSignCandidate(
     val key: String,
     val displayText: String,
     val count: Int,
-    val sources: Set<DreamSignSource>
+    val sources: Set<DreamSignSource>,
+    val dreamTitles: List<String>
 )
 
 data class DreamSignsUiState(
     val hasDreams: Boolean = false,
     val promotedSigns: List<DreamSignCandidate> = emptyList(),
-    val candidateSigns: List<DreamSignCandidate> = emptyList()
+    val candidateSigns: List<DreamSignCandidate> = emptyList(),
+    val maxCount: Int = 0
 ) {
     val hasCandidates: Boolean = candidateSigns.isNotEmpty()
 }
