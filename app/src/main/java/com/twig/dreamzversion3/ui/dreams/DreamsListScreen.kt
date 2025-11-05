@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -30,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.R
 import com.twig.dreamzversion3.model.dream.Dream
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamsListRoute(
     onAddDream: () -> Unit,
@@ -44,6 +46,7 @@ fun DreamsListRoute(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamsListScreen(
     dreams: List<Dream>,
