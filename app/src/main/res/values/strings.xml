@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DreamZ version 3</string>
+
     <string name="dreams_tab_label">Dreams</string>
     <string name="dream_signs_tab_label">Dream Signs</string>
     <string name="settings_tab_label">Settings</string>
@@ -77,7 +78,7 @@
     <string name="settings_drive_connect">Connect</string>
     <string name="settings_drive_disconnect">Disconnect</string>
     <string name="settings_drive_sync_now">Sync now</string>
-    <string name="settings_drive_syncing">Syncing with Google Drive…</string>
+    <string name="settings_drive_syncing">Syncing with Google Drive&#8230;</string>
     <string name="settings_drive_preview_header">Upcoming files</string>
     <string name="settings_drive_preview_placeholder">No description captured yet.</string>
 </resources>
