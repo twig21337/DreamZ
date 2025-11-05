@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">DreamZ version 3</string>
+    <string name="dreams_tab_label">Dreams</string>
+    <string name="dream_signs_tab_label">Dream Signs</string>
+    <string name="settings_tab_label">Settings</string>
+    <string name="account_tab_label">Account</string>
 </resources>
