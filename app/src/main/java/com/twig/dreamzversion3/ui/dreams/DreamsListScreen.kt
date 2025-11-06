@@ -209,14 +209,14 @@ private fun DreamsDetailList(
                     }
                     Text(
                         text = stringResource(
-                            id = R.string.dream_intensity_label,
+                            id = R.string.dream_intensity_value,
                             dream.intensity.toInt()
                         ),
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
                         text = stringResource(
-                            id = R.string.dream_emotion_label,
+                            id = R.string.dream_emotion_value,
                             dream.emotion.toInt()
                         ),
                         style = MaterialTheme.typography.bodySmall

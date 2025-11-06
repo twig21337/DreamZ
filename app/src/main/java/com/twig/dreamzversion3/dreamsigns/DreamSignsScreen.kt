@@ -387,7 +387,7 @@ private fun DreamSignFrequency(
             )
         }
         Text(
-            text = stringResource(id = R.string.dream_signs_frequency_caption, count),
+            text = stringResource(id = R.string.dream_signs_frequency_caption),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

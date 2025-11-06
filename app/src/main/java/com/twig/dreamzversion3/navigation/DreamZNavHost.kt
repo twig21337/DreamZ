@@ -1,6 +1,7 @@
 package com.twig.dreamzversion3.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -10,10 +11,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.twig.dreamzversion3.account.AccountRoute
+import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
+import com.twig.dreamzversion3.data.dream.DreamRepositories
 import com.twig.dreamzversion3.dreamsigns.DreamSignsRoute
+import com.twig.dreamzversion3.drive.DriveSyncManager
 import com.twig.dreamzversion3.settings.SettingsScreen
-import com.twig.dreamzversion3.settings.SettingsUiState
+import com.twig.dreamzversion3.settings.SettingsViewModel
 import com.twig.dreamzversion3.ui.dreams.DreamEntryRoute
 import com.twig.dreamzversion3.ui.dreams.DreamsDestinations
 import com.twig.dreamzversion3.ui.dreams.DreamsListRoute
@@ -82,14 +87,22 @@ fun DreamZNavHost(
             DreamSignsRoute()
         }
         composable(DreamZDestination.Settings.route) {
-            // ✅ call the screen directly with defaults so it compiles
+            val preferences = LocalUserPreferencesRepository.current
+            val driveSyncManager = remember { DriveSyncManager(DreamRepositories.inMemory) }
+            val viewModel: SettingsViewModel = viewModel(
+                factory = SettingsViewModel.factory(
+                    preferences = preferences,
+                    driveSyncManager = driveSyncManager
+                )
+            )
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             SettingsScreen(
-                uiState = SettingsUiState(),
-                onThemeSelected = {},
-                onDriveTokenChanged = {},
-                onConnectDrive = {},
-                onDisconnectDrive = {},
-                onSyncNow = {}
+                uiState = uiState,
+                onThemeSelected = viewModel::onThemeSelected,
+                onDriveTokenChanged = viewModel::onDriveTokenChange,
+                onConnectDrive = viewModel::connectDrive,
+                onDisconnectDrive = viewModel::disconnectDrive,
+                onSyncNow = viewModel::syncNow
             )
         }
         composable(DreamZDestination.Account.route) {

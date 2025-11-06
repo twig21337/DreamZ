@@ -16,10 +16,13 @@
     <string name="dream_toggle_to_list_view">Show as list</string>
     <string name="empty_dreams_title">No dreams yet</string>
     <string name="empty_dreams_body">Tap “Add dream” to create your first entry.</string>
-    <string name="dream_mood_value">Mood:</string>
-    <string name="dream_tags_value">Tags:</string>
+    <string name="dream_mood_value">Mood: %1$s</string>
+    <string name="dream_tags_value">Tags: %1$s</string>
     <string name="dream_intensity_label">Intensity</string>
     <string name="dream_emotion_label">Emotion</string>
+    <string name="dream_intensity_value">Intensity: %1$d / 10</string>
+    <string name="dream_emotion_value">Emotion: %1$d / 10</string>
+    <string name="dream_rating_value">%1$d / 10</string>
     <string name="lucid_dream_content_description">Lucid dream</string>
     <string name="recurring_dream_content_description">Recurring dream</string>
 
@@ -49,14 +52,14 @@
     <string name="dream_signs_blacklist_input_label">Add word to ignore</string>
     <string name="dream_signs_add_blacklist_cd">Add to ignore list</string>
     <string name="dream_signs_blacklist_empty">No ignored words.</string>
-    <string name="dream_signs_remove_blacklist_cd">Remove from ignored words</string>
-    <string name="dream_signs_blacklist_candidate_cd">Ignore this word</string>
+    <string name="dream_signs_remove_blacklist_cd">Remove %1$s from ignored words</string>
+    <string name="dream_signs_blacklist_candidate_cd">Ignore %1$s</string>
 
     <!-- Promoted section -->
     <string name="dream_signs_promoted_section_title">Promoted signs</string>
     <string name="dream_signs_promoted_empty">No promoted signs.</string>
     <string name="dream_signs_promoted_chip">Promoted</string>
-    <string name="dream_signs_remove_promoted_cd">Remove promoted dream sign</string>
+    <string name="dream_signs_remove_promoted_cd">Remove promoted dream sign %1$s</string>
     <string name="dream_signs_promote_button">Promote</string>
 
     <!-- Candidates section -->
@@ -67,8 +70,8 @@
 
     <!-- Seen in -->
     <string name="dream_signs_seen_in_none">Seen in 0 dreams.</string>
-    <string name="dream_signs_seen_in_single">Seen in 1 dream.</string>
-    <string name="dream_signs_seen_in">Seen in %1$d dreams.</string>
+    <string name="dream_signs_seen_in_single">Seen in 1 dream: %2$s.</string>
+    <string name="dream_signs_seen_in">Seen in %1$d dreams: %2$s.</string>
 
     <!-- Source descriptions -->
     <string name="dream_signs_source_description_both">Found in dreams and tags.</string>

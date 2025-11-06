@@ -118,27 +118,34 @@ private fun replaceDocContent(
     documentId: String,
     text: String
 ) {
-    // 1) delete all existing content (except the structural end)
-    // 2) insert new text
-    val body = """
-        {
-          "requests": [
+    val docLength = fetchDocumentLength(token, documentId)
+    val requests = mutableListOf<String>()
+    if (docLength > 1) {
+        requests += """
             {
               "deleteContentRange": {
                 "range": {
                   "startIndex": 1,
-                  "endIndex": 999999
+                  "endIndex": $docLength
                 }
               }
-            },
-            {
-              "insertText": {
-                "location": {
-                  "index": 1
-                },
-                "text": ${text.toJsonString()}
-              }
             }
+        """.trimIndent()
+    }
+    requests += """
+        {
+          "insertText": {
+            "location": {
+              "index": 1
+            },
+            "text": ${text.toJsonString()}
+          }
+        }
+    """.trimIndent()
+    val body = """
+        {
+          "requests": [
+            ${requests.joinToString(",")}
           ]
         }
     """.trimIndent()
@@ -146,11 +153,36 @@ private fun replaceDocContent(
     val req = Request.Builder()
         .url("$DOCS_BASE/documents/$documentId:batchUpdate")
         .auth(token)
+        .header("Content-Type", "application/json; charset=utf-8")
         .post(body.toRequestBody("application/json; charset=utf-8".toMediaType()))
         .build()
 
     client.newCall(req).execute().use { resp ->
-        if (!resp.isSuccessful) error("Docs batchUpdate failed: ${resp.code} ${resp.message}")
+        val respBody = resp.body?.string().orEmpty()
+        if (!resp.isSuccessful) {
+            val detail = respBody.takeIf { it.isNotBlank() }?.let { " - $it" }.orEmpty()
+            error("Docs batchUpdate failed: ${resp.code} ${resp.message}$detail")
+        }
+    }
+}
+
+private fun fetchDocumentLength(token: String, documentId: String): Int {
+    val req = Request.Builder()
+        .url("$DOCS_BASE/documents/$documentId?fields=body/content/endIndex")
+        .auth(token)
+        .build()
+
+    client.newCall(req).execute().use { resp ->
+        val body = resp.body?.string().orEmpty()
+        if (!resp.isSuccessful) {
+            val detail = body.takeIf { it.isNotBlank() }?.let { " - $it" }.orEmpty()
+            error("Docs get failed: ${resp.code} ${resp.message}$detail")
+        }
+        return Regex("\"endIndex\"\\s*:\\s*(\\d+)")
+            .findAll(body)
+            .map { it.groupValues[1].toInt() }
+            .maxOrNull()
+            ?: 1
     }
 }
 

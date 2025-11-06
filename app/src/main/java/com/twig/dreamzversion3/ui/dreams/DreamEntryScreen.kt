@@ -155,12 +155,12 @@ fun DreamEntryScreen(
                 onCheckedChange = onLucidChange
             )
             EntrySlider(
-                label = stringResource(id = R.string.dream_intensity_label, entryState.intensity.toInt()),
+                label = stringResource(id = R.string.dream_intensity_label),
                 value = entryState.intensity,
                 onValueChange = onIntensityChange
             )
             EntrySlider(
-                label = stringResource(id = R.string.dream_emotion_label, entryState.emotion.toInt()),
+                label = stringResource(id = R.string.dream_emotion_label),
                 value = entryState.emotion,
                 onValueChange = onEmotionChange
             )
@@ -254,8 +254,26 @@ private fun EntrySlider(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(text = label)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = stringResource(id = R.string.dream_rating_value, value.toInt()),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         Slider(
             value = value,
             onValueChange = onValueChange,
