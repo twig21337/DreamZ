@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -32,6 +33,12 @@ fun DreamZNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val dreamRepository = remember(context) { DreamRepositories.persistent(context) }
+    val dreamsViewModelFactory = remember(dreamRepository) {
+        DreamsViewModel.factory(dreamRepository)
+    }
+
     NavHost(
         navController = navController,
         startDestination = DreamZDestination.Dreams.route,
@@ -45,7 +52,10 @@ fun DreamZNavHost(
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(DreamZDestination.Dreams.route)
                 }
-                val dreamsViewModel: DreamsViewModel = viewModel(parentEntry)
+                val dreamsViewModel: DreamsViewModel = viewModel(
+                    parentEntry,
+                    factory = dreamsViewModelFactory
+                )
                 DreamsListRoute(
                     onAddDream = { navController.navigate(DreamsDestinations.ADD_ROUTE) },
                     onDreamSelected = { dreamId ->
@@ -58,7 +68,10 @@ fun DreamZNavHost(
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(DreamZDestination.Dreams.route)
                 }
-                val dreamsViewModel: DreamsViewModel = viewModel(parentEntry)
+                val dreamsViewModel: DreamsViewModel = viewModel(
+                    parentEntry,
+                    factory = dreamsViewModelFactory
+                )
                 DreamEntryRoute(
                     onNavigateBack = { navController.popBackStack() },
                     dreamId = null,
@@ -76,7 +89,10 @@ fun DreamZNavHost(
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(DreamZDestination.Dreams.route)
                 }
-                val dreamsViewModel: DreamsViewModel = viewModel(parentEntry)
+                val dreamsViewModel: DreamsViewModel = viewModel(
+                    parentEntry,
+                    factory = dreamsViewModelFactory
+                )
                 val dreamId =
                     backStackEntry.arguments?.getString(DreamsDestinations.DREAM_ID_ARG)
                 DreamEntryRoute(
@@ -95,9 +111,9 @@ fun DreamZNavHost(
                     navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
                 }
                 val preferences = LocalUserPreferencesRepository.current
-                val viewModelFactory = remember(preferences) {
+                val viewModelFactory = remember(preferences, dreamRepository) {
                     DreamSignsViewModel.factory(
-                        repository = DreamRepositories.inMemory,
+                        repository = dreamRepository,
                         preferences = preferences
                     )
                 }
@@ -117,9 +133,9 @@ fun DreamZNavHost(
                     navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
                 }
                 val preferences = LocalUserPreferencesRepository.current
-                val viewModelFactory = remember(preferences) {
+                val viewModelFactory = remember(preferences, dreamRepository) {
                     DreamSignsViewModel.factory(
-                        repository = DreamRepositories.inMemory,
+                        repository = dreamRepository,
                         preferences = preferences
                     )
                 }
@@ -135,7 +151,7 @@ fun DreamZNavHost(
         }
         composable(DreamZDestination.Settings.route) {
             val preferences = LocalUserPreferencesRepository.current
-            val driveSyncManager = remember { DriveSyncManager(DreamRepositories.inMemory) }
+            val driveSyncManager = remember(dreamRepository) { DriveSyncManager(dreamRepository) }
             val viewModel: SettingsViewModel = viewModel(
                 factory = SettingsViewModel.factory(
                     preferences = preferences,

@@ -1,5 +1,8 @@
 package com.twig.dreamzversion3.model.dream
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Dream(
     val id: String,
     val title: String,

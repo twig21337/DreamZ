@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     kotlin("kapt")
+    kotlin("plugin.serialization")
 }
 
 // 1) load local.properties (safe, not committed)

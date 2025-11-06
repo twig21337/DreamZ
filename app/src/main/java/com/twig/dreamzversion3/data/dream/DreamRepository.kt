@@ -1,5 +1,6 @@
 package com.twig.dreamzversion3.data.dream
 
+import android.content.Context
 import com.twig.dreamzversion3.model.dream.Dream
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,4 +40,17 @@ class InMemoryDreamRepository : DreamRepository {
 
 object DreamRepositories {
     val inMemory: DreamRepository by lazy { InMemoryDreamRepository() }
+
+    @Volatile
+    private var persistentRepository: DreamRepository? = null
+
+    fun persistent(context: Context): DreamRepository {
+        val existing = persistentRepository
+        if (existing != null) return existing
+        return synchronized(this) {
+            persistentRepository ?: DataStoreDreamRepository(context.applicationContext).also {
+                persistentRepository = it
+            }
+        }
+    }
 }

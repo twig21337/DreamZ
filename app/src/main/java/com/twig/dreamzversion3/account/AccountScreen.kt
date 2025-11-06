@@ -48,7 +48,8 @@ import kotlinx.coroutines.launch
 fun AccountRoute() {
     val context = LocalContext.current
     val preferences = LocalUserPreferencesRepository.current
-    val driveSyncManager = remember { DriveSyncManager(DreamRepositories.inMemory) }
+    val dreamRepository = remember(context) { DreamRepositories.persistent(context) }
+    val driveSyncManager = remember(dreamRepository) { DriveSyncManager(dreamRepository) }
     val viewModel: AccountViewModel = viewModel(
         factory = AccountViewModel.factory(preferences, driveSyncManager, context)
     )

@@ -1,8 +1,8 @@
 package com.twig.dreamzversion3.ui.dreams
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.twig.dreamzversion3.data.dream.DreamRepositories
 import com.twig.dreamzversion3.data.dream.DreamRepository
 import com.twig.dreamzversion3.model.dream.Dream
 import java.util.UUID
@@ -13,9 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 
 class DreamsViewModel(
-    private val repository: DreamRepository = DreamRepositories.inMemory
+    private val repository: DreamRepository
 ) : ViewModel() {
 
     private val _dreamEntryState = MutableStateFlow(DreamEntryUiState())
@@ -128,6 +130,12 @@ class DreamsViewModel(
                 DreamListMode.List -> DreamListMode.Card
                 DreamListMode.Card -> DreamListMode.List
             }
+        }
+    }
+
+    companion object {
+        fun factory(repository: DreamRepository): ViewModelProvider.Factory = viewModelFactory {
+            initializer { DreamsViewModel(repository) }
         }
     }
 }

@@ -41,24 +41,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.R
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.width
-import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
-import com.twig.dreamzversion3.data.dream.DreamRepositories
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DreamSignsRoute(
     onManageIgnoredWords: () -> Unit,
-    viewModel: DreamSignsViewModel = viewModel(
-        factory = DreamSignsViewModel.factory(
-            repository = DreamRepositories.inMemory,
-            preferences = LocalUserPreferencesRepository.current
-        )
-    )
+    viewModel: DreamSignsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DreamSignsScreen(
@@ -174,12 +166,7 @@ fun DreamSignsScreen(
 @Composable
 fun DreamSignIgnoredWordsRoute(
     onNavigateBack: () -> Unit,
-    viewModel: DreamSignsViewModel = viewModel(
-        factory = DreamSignsViewModel.factory(
-            repository = DreamRepositories.inMemory,
-            preferences = LocalUserPreferencesRepository.current
-        )
-    )
+    viewModel: DreamSignsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DreamSignIgnoredWordsScreen(
