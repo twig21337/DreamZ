@@ -15,7 +15,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.twig.dreamzversion3.account.AccountRoute
 import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepositories
+import com.twig.dreamzversion3.dreamsigns.DreamSignIgnoredWordsRoute
+import com.twig.dreamzversion3.dreamsigns.DreamSignsDestinations
 import com.twig.dreamzversion3.dreamsigns.DreamSignsRoute
+import com.twig.dreamzversion3.dreamsigns.DreamSignsViewModel
 import com.twig.dreamzversion3.drive.DriveSyncManager
 import com.twig.dreamzversion3.settings.SettingsScreen
 import com.twig.dreamzversion3.settings.SettingsViewModel
@@ -83,8 +86,32 @@ fun DreamZNavHost(
                 )
             }
         }
-        composable(DreamZDestination.DreamSigns.route) {
-            DreamSignsRoute()
+        navigation(
+            route = DreamZDestination.DreamSigns.route,
+            startDestination = DreamSignsDestinations.HOME_ROUTE
+        ) {
+            composable(DreamSignsDestinations.HOME_ROUTE) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
+                }
+                val viewModel: DreamSignsViewModel = viewModel(parentEntry)
+                DreamSignsRoute(
+                    onManageIgnoredWords = {
+                        navController.navigate(DreamSignsDestinations.IGNORED_ROUTE)
+                    },
+                    viewModel = viewModel
+                )
+            }
+            composable(DreamSignsDestinations.IGNORED_ROUTE) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
+                }
+                val viewModel: DreamSignsViewModel = viewModel(parentEntry)
+                DreamSignIgnoredWordsRoute(
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
+            }
         }
         composable(DreamZDestination.Settings.route) {
             val preferences = LocalUserPreferencesRepository.current

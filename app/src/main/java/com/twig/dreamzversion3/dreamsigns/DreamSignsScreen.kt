@@ -1,6 +1,5 @@
 package com.twig.dreamzversion3.dreamsigns
 
-
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Star
@@ -44,27 +45,28 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.R
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.width
 import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepositories
 
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun DreamSignsRoute() {
-    val preferences = LocalUserPreferencesRepository.current
-    val viewModel: DreamSignsViewModel = viewModel(
+fun DreamSignsRoute(
+    onManageIgnoredWords: () -> Unit,
+    viewModel: DreamSignsViewModel = viewModel(
         factory = DreamSignsViewModel.factory(
             repository = DreamRepositories.inMemory,
-            preferences = preferences
+            preferences = LocalUserPreferencesRepository.current
         )
     )
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DreamSignsScreen(
         uiState = uiState,
         onPromoteSign = viewModel::promoteSign,
         onRemovePromotedSign = viewModel::removePromotedSign,
         onBlacklistSign = viewModel::addToBlacklist,
-        onRemoveBlacklistedSign = viewModel::removeFromBlacklist
+        onManageIgnoredWords = onManageIgnoredWords
     )
 }
 
@@ -75,7 +77,7 @@ fun DreamSignsScreen(
     onPromoteSign: (String) -> Unit,
     onRemovePromotedSign: (String) -> Unit,
     onBlacklistSign: (String) -> Unit,
-    onRemoveBlacklistedSign: (String) -> Unit,
+    onManageIgnoredWords: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -87,7 +89,6 @@ fun DreamSignsScreen(
         if (!uiState.hasDreams) {
             DreamSignsEmptyState(modifier = Modifier.padding(innerPadding))
         } else {
-            var blacklistInput by rememberSaveable { mutableStateOf("") }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -95,72 +96,23 @@ fun DreamSignsScreen(
                 contentPadding = PaddingValues(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item(key = "blacklist_header") {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = stringResource(id = R.string.dream_signs_blacklist_section_title),
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                item(key = "manage_blacklist") {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
                             text = stringResource(id = R.string.dream_signs_blacklist_description),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
-                }
-                item(key = "blacklist_input") {
-                    OutlinedTextField(
-                        value = blacklistInput,
-                        onValueChange = { blacklistInput = it },
-                        label = { Text(text = stringResource(id = R.string.dream_signs_blacklist_input_label)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    val value = blacklistInput.trim()
-                                    if (value.isNotEmpty()) {
-                                        onBlacklistSign(value)
-                                        blacklistInput = ""
-                                    }
-                                },
-                                enabled = blacklistInput.isNotBlank()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Add,
-                                    contentDescription = stringResource(id = R.string.dream_signs_add_blacklist_cd)
-                                )
-                            }
-                        }
-                    )
-                }
-                item(key = "blacklist_list") {
-                    if (uiState.blacklistedSigns.isEmpty()) {
-                        Text(
-                            text = stringResource(id = R.string.dream_signs_blacklist_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        OutlinedButton(
+                            onClick = onManageIgnoredWords,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            uiState.blacklistedSigns.forEach { term ->
-                                AssistChip(
-                                    onClick = { onRemoveBlacklistedSign(term) },
-                                    label = { Text(text = term) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Close,
-                                            contentDescription = stringResource(
-                                                id = R.string.dream_signs_remove_blacklist_cd,
-                                                term
-                                            )
-                                        )
-                                    }
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Outlined.Block,
+                                contentDescription = stringResource(id = R.string.dream_signs_manage_ignored_words_cd)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = stringResource(id = R.string.dream_signs_manage_ignored_words_button))
                         }
                     }
                 }
@@ -210,6 +162,120 @@ fun DreamSignsScreen(
                             onPromote = onPromoteSign,
                             onBlacklist = onBlacklistSign,
                             maxCount = uiState.maxCount
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun DreamSignIgnoredWordsRoute(
+    onNavigateBack: () -> Unit,
+    viewModel: DreamSignsViewModel = viewModel(
+        factory = DreamSignsViewModel.factory(
+            repository = DreamRepositories.inMemory,
+            preferences = LocalUserPreferencesRepository.current
+        )
+    )
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    DreamSignIgnoredWordsScreen(
+        ignoredWords = uiState.blacklistedSigns,
+        onAddIgnoredWord = viewModel::addToBlacklist,
+        onRemoveIgnoredWord = viewModel::removeFromBlacklist,
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun DreamSignIgnoredWordsScreen(
+    ignoredWords: List<String>,
+    onAddIgnoredWord: (String) -> Unit,
+    onRemoveIgnoredWord: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var blacklistInput by rememberSaveable { mutableStateOf("") }
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(text = stringResource(id = R.string.dream_signs_blacklist_section_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.Outlined.ArrowBack,
+                            contentDescription = stringResource(id = R.string.cd_navigate_back)
+                        )
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.dream_signs_blacklist_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedTextField(
+                value = blacklistInput,
+                onValueChange = { blacklistInput = it },
+                label = { Text(text = stringResource(id = R.string.dream_signs_blacklist_input_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            val value = blacklistInput.trim()
+                            if (value.isNotEmpty()) {
+                                onAddIgnoredWord(value)
+                                blacklistInput = ""
+                            }
+                        },
+                        enabled = blacklistInput.isNotBlank()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = stringResource(id = R.string.dream_signs_add_blacklist_cd)
+                        )
+                    }
+                }
+            )
+            if (ignoredWords.isEmpty()) {
+                Text(
+                    text = stringResource(id = R.string.dream_signs_blacklist_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ignoredWords.forEach { term ->
+                        AssistChip(
+                            onClick = { onRemoveIgnoredWord(term) },
+                            label = { Text(text = term) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = stringResource(
+                                        id = R.string.dream_signs_remove_blacklist_cd,
+                                        term
+                                    )
+                                )
+                            }
                         )
                     }
                 }

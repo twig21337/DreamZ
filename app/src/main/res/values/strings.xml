@@ -54,6 +54,8 @@
     <string name="dream_signs_blacklist_empty">No ignored words.</string>
     <string name="dream_signs_remove_blacklist_cd">Remove %1$s from ignored words</string>
     <string name="dream_signs_blacklist_candidate_cd">Ignore %1$s</string>
+    <string name="dream_signs_manage_ignored_words_button">Manage ignored words</string>
+    <string name="dream_signs_manage_ignored_words_cd">Manage ignored words</string>
 
     <!-- Promoted section -->
     <string name="dream_signs_promoted_section_title">Promoted signs</string>

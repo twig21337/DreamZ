@@ -121,16 +121,19 @@ private fun replaceDocContent(
     val docLength = fetchDocumentLength(token, documentId)
     val requests = mutableListOf<String>()
     if (docLength > 1) {
-        requests += """
-            {
-              "deleteContentRange": {
-                "range": {
-                  "startIndex": 1,
-                  "endIndex": $docLength
+        val endIndex = (docLength - 1).coerceAtLeast(1)
+        if (endIndex > 1) {
+            requests += """
+                {
+                  "deleteContentRange": {
+                    "range": {
+                      "startIndex": 1,
+                      "endIndex": $endIndex
+                    }
+                  }
                 }
-              }
-            }
-        """.trimIndent()
+            """.trimIndent()
+        }
     }
     requests += """
         {
