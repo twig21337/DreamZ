@@ -144,11 +144,16 @@ class SettingsViewModel(
         fun factory(
             preferences: UserPreferencesRepository,
             driveSyncManager: DriveSyncManager
-        ): ViewModelProvider.Factory = ViewModelProvider.Factory { modelClass ->
-            if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-                SettingsViewModel(preferences, driveSyncManager)
-            } else {
-                throw IllegalArgumentException("Unknown ViewModel class $modelClass")
+        ): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+                        SettingsViewModel(preferences, driveSyncManager) as T
+                    } else {
+                        throw IllegalArgumentException("Unknown ViewModel class $modelClass")
+                    }
+                }
             }
         }
     }

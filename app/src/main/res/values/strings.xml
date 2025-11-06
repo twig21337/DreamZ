@@ -1,84 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DreamZ version 3</string>
 
+    <!-- App -->
+    <string name="app_name">DreamZ</string>
+
+    <!-- Tabs / nav -->
     <string name="dreams_tab_label">Dreams</string>
-    <string name="dream_signs_tab_label">Dream Signs</string>
+    <string name="dream_signs_tab_label">Dream signs</string>
     <string name="settings_tab_label">Settings</string>
     <string name="account_tab_label">Account</string>
 
+    <!-- Dreams list -->
     <string name="add_dream_fab">Add dream</string>
-    <string name="recurring_dream_content_description">Recurring dream</string>
+    <string name="dream_toggle_to_card_view">Show as cards</string>
+    <string name="dream_toggle_to_list_view">Show as list</string>
+    <string name="empty_dreams_title">No dreams yet</string>
+    <string name="empty_dreams_body">Tap “Add dream” to create your first entry.</string>
+    <string name="dream_mood_value">Mood:</string>
+    <string name="dream_tags_value">Tags:</string>
+    <string name="dream_intensity_label">Intensity</string>
+    <string name="dream_emotion_label">Emotion</string>
     <string name="lucid_dream_content_description">Lucid dream</string>
-    <string name="lucid_dream_label">Lucid dream</string>
-    <string name="lucid_dream_hint">Check this if you were aware that you were dreaming.</string>
+    <string name="recurring_dream_content_description">Recurring dream</string>
 
-    <string name="empty_dreams_title">Your dream journal is empty</string>
-    <string name="empty_dreams_body">Start by adding your first dream entry.</string>
+    <!-- Dream entry / editor -->
     <string name="add_dream_title">Add dream</string>
     <string name="edit_dream_title">Edit dream</string>
     <string name="cd_navigate_back">Navigate back</string>
     <string name="dream_title_label">Title</string>
-    <string name="dream_description_label">Description</string>
-    <string name="dream_description_support">Describe what happened in as much detail as you like.</string>
+    <string name="dream_description_label">Dream description</string>
+    <string name="dream_description_support">Describe what happened in your dream.</string>
     <string name="dream_tags_label">Tags</string>
-    <string name="dream_tags_support">Separate tags with commas to help track themes.</string>
+    <string name="dream_tags_support">Comma-separated tags, e.g. “flying, school, ocean”.</string>
     <string name="dream_mood_label">Mood</string>
-    <string name="dream_mood_value">Mood: %1$s</string>
-    <string name="dream_tags_value">Tags: %1$s</string>
-    <string name="dream_intensity_label">Dream intensity: %1$d / 10</string>
-    <string name="dream_emotion_label">Dream emotion: %1$d / 10</string>
-    <string name="recurring_dream_label">Recurring dream</string>
-    <string name="recurring_dream_hint">Toggle on if this dream happens regularly.</string>
     <string name="save_dream_cta">Save dream</string>
     <string name="cancel_label">Cancel</string>
-    <string name="dream_toggle_to_card_view">Show detailed cards</string>
-    <string name="dream_toggle_to_list_view">Show compact list</string>
+    <string name="recurring_dream_label">Recurring dream</string>
+    <string name="recurring_dream_hint">Check if you’ve had this kind of dream before.</string>
+    <string name="lucid_dream_label">Lucid dream</string>
+    <string name="lucid_dream_hint">Check if you were aware and could control the dream.</string>
 
-    <string name="dream_signs_title">Dream Signs</string>
-    <string name="dream_signs_promoted_section_title">Your dream signs</string>
-    <string name="dream_signs_candidates_section_title">Most frequent from dreams</string>
-    <string name="dream_signs_promoted_empty">Promote a dream sign to keep it pinned here.</string>
-    <string name="dream_signs_no_candidates">Add more dream details or tags to discover new dream signs.</string>
-    <string name="dream_signs_blacklist_section_title">Blacklist dream signs</string>
-    <string name="dream_signs_blacklist_description">Hide tokens or phrases that aren&#39;t meaningful so they stop showing up below.</string>
-    <string name="dream_signs_blacklist_input_label">Add word or phrase</string>
-    <string name="dream_signs_blacklist_empty">No blacklisted terms yet.</string>
-    <string name="dream_signs_add_blacklist_cd">Add to blacklist</string>
-    <string name="dream_signs_remove_blacklist_cd">Remove %1$s from blacklist</string>
-    <string name="dream_signs_blacklist_candidate_cd">Blacklist %1$s</string>
-    <string name="dream_signs_empty_state_title">No dream signs yet</string>
-    <string name="dream_signs_empty_state_body">Start journaling dreams to see recurring themes and symbols here.</string>
-    <string name="dream_signs_frequency_chip">%1$dx</string>
-    <string name="dream_signs_frequency_caption">%1$d occurrences</string>
-    <string name="dream_signs_promote_button">Promote</string>
+    <!-- Dream signs screen -->
+    <string name="dream_signs_title">Dream signs</string>
+
+    <!-- Blacklist section -->
+    <string name="dream_signs_blacklist_section_title">Ignored words</string>
+    <string name="dream_signs_blacklist_description">Words here won’t be counted as dream signs.</string>
+    <string name="dream_signs_blacklist_input_label">Add word to ignore</string>
+    <string name="dream_signs_add_blacklist_cd">Add to ignore list</string>
+    <string name="dream_signs_blacklist_empty">No ignored words.</string>
+    <string name="dream_signs_remove_blacklist_cd">Remove from ignored words</string>
+    <string name="dream_signs_blacklist_candidate_cd">Ignore this word</string>
+
+    <!-- Promoted section -->
+    <string name="dream_signs_promoted_section_title">Promoted signs</string>
+    <string name="dream_signs_promoted_empty">No promoted signs.</string>
     <string name="dream_signs_promoted_chip">Promoted</string>
-    <string name="dream_signs_seen_in">Seen in %1$d dreams (%2$s)</string>
-    <string name="dream_signs_seen_in_single">Seen in %1$d dream (%2$s)</string>
-    <string name="dream_signs_seen_in_none">Not seen in any dreams yet</string>
-    <string name="dream_signs_source_description_both">From descriptions &amp; tags</string>
-    <string name="dream_signs_source_description_tags">From dream tags</string>
-    <string name="dream_signs_source_description_dreams">From dream descriptions</string>
-    <string name="dream_signs_source_description_manual">Saved dream sign</string>
-    <string name="dream_signs_remove_promoted_cd">Remove %1$s from promoted dream signs</string>
+    <string name="dream_signs_remove_promoted_cd">Remove promoted dream sign</string>
+    <string name="dream_signs_promote_button">Promote</string>
 
+    <!-- Candidates section -->
+    <string name="dream_signs_candidates_section_title">Candidates</string>
+    <string name="dream_signs_no_candidates">No candidate signs found yet.</string>
+    <string name="dream_signs_frequency_chip">Seen %1$d×</string>
+    <string name="dream_signs_frequency_caption">Frequency from entries and tags.</string>
+
+    <!-- Seen in -->
+    <string name="dream_signs_seen_in_none">Seen in 0 dreams.</string>
+    <string name="dream_signs_seen_in_single">Seen in 1 dream.</string>
+    <string name="dream_signs_seen_in">Seen in %1$d dreams.</string>
+
+    <!-- Source descriptions -->
+    <string name="dream_signs_source_description_both">Found in dreams and tags.</string>
+    <string name="dream_signs_source_description_tags">Found in tags.</string>
+    <string name="dream_signs_source_description_dreams">Found in dreams.</string>
+    <string name="dream_signs_source_description_manual">Manually added.</string>
+
+    <!-- Empty state -->
+    <string name="dream_signs_empty_state_title">No dream signs yet</string>
+    <string name="dream_signs_empty_state_body">Add more dreams or tags to see common patterns.</string>
+
+    <!-- Settings screen -->
     <string name="settings_title">Settings</string>
-    <string name="settings_theme_header">App theme</string>
-    <string name="settings_theme_description">Choose how DreamZ matches your device or keeps a fixed look.</string>
-    <string name="settings_theme_system">Use system setting</string>
-    <string name="settings_theme_light">Light</string>
-    <string name="settings_theme_dark">Dark</string>
-    <string name="settings_theme_system_description">Automatically switch between light and dark based on your device.</string>
-    <string name="settings_theme_light_description">Always use the light color palette.</string>
-    <string name="settings_theme_dark_description">Always use the dark color palette.</string>
-    <string name="settings_drive_header">Google Drive sync</string>
-    <string name="settings_drive_description">Connect Drive to keep a copy of each dream as a Word document inside a DreamZ folder.</string>
-    <string name="settings_drive_token_label">OAuth access token</string>
-    <string name="settings_drive_token_helper">Paste a short-lived OAuth token after authenticating with your Google account.</string>
+    <string name="settings_theme_header">Theme</string>
+    <string name="settings_theme_description">Choose light, dark, or follow system.</string>
+    <string name="settings_theme_system">Use system theme</string>
+    <string name="settings_theme_light">Light theme</string>
+    <string name="settings_theme_dark">Dark theme</string>
+    <string name="settings_theme_system_description">Match your device theme.</string>
+    <string name="settings_theme_light_description">Always use light.</string>
+    <string name="settings_theme_dark_description">Always use dark.</string>
+
+    <!-- Drive settings -->
+    <string name="settings_drive_header">Google Drive</string>
+    <string name="settings_drive_description">Connect to back up and sync your dreams.</string>
+    <string name="settings_drive_token_label">Access token</string>
+    <string name="settings_drive_token_helper">Paste your token or connect.</string>
+    <string name="settings_drive_preview_header">Preview sync folder</string>
+    <string name="settings_drive_preview_placeholder">No files yet.</string>
+    <string name="settings_drive_sync_now">Sync now</string>
     <string name="settings_drive_connect">Connect</string>
     <string name="settings_drive_disconnect">Disconnect</string>
-    <string name="settings_drive_sync_now">Sync now</string>
-    <string name="settings_drive_syncing">Syncing with Google Drive&#8230;</string>
-    <string name="settings_drive_preview_header">Upcoming files</string>
-    <string name="settings_drive_preview_placeholder">No description captured yet.</string>
+    <string name="settings_drive_syncing">Syncing with Google Drive…</string>
+
 </resources>
