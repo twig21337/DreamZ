@@ -5,7 +5,12 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.twig.dreamzversion3.data.AppDb
+import com.twig.dreamzversion3.data.DreamEntry
 import com.twig.dreamzversion3.data.DreamRepo
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class DriveSyncWorker(
     appContext: Context,
@@ -21,6 +26,7 @@ class DriveSyncWorker(
         return try {
             val entries = repo.getAll()
             setProgress(workDataOf(KEY_STATUS to "Preparing Google Drive…"))
+
             val folderId = ensureDreamZFolder(token)
 
             if (entries.isEmpty()) {
@@ -28,6 +34,7 @@ class DriveSyncWorker(
                 Result.success(workDataOf(KEY_STATUS to "Nothing to sync"))
             } else {
                 val total = entries.size
+
                 entries.forEachIndexed { index, entry ->
                     setProgress(
                         workDataOf(
@@ -36,13 +43,20 @@ class DriveSyncWorker(
                             KEY_TOTAL to total
                         )
                     )
-                    upsertJsonFile(
+
+                    val dateStr = formatDate(entry.createdAt)
+                    val title = (entry.title ?: "").ifBlank { "Untitled Dream" }
+                    val body = buildDriveDocBody(entry)
+
+                    upsertDreamAsGoogleDoc(
                         token = token,
-                        parentId = folderId,
-                        name = "entries_${entry.id}.json",
-                        jsonContent = entryToJson(entry)
+                        folderId = folderId,
+                        date = dateStr,
+                        title = title,
+                        body = body
                     )
                 }
+
                 setProgress(workDataOf(KEY_STATUS to "Sync complete"))
                 Result.success(workDataOf(KEY_STATUS to "Sync complete"))
             }
@@ -66,24 +80,47 @@ class DriveSyncWorker(
     }
 }
 
-private fun entryToJson(e: com.twig.dreamzversion3.data.DreamEntry): String = """
-{
-  "id": ${esc(e.id)},
-  "title": ${esc(e.title)},
-  "body": ${esc(e.body)},
-  "mood": ${esc(e.mood)},
-  "lucid": ${e.lucid},
-  "tags": ${listToJson(e.tags)},
-  "intensityRating": ${e.intensityRating},
-  "emotionRating": ${e.emotionRating},
-  "lucidityRating": ${e.lucidityRating},
-  "createdAt": ${e.createdAt},
-  "editedAt": ${e.editedAt}
+// ---------------- helpers ----------------
+
+private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+    timeZone = TimeZone.getDefault()
 }
-""".trimIndent()
 
-private fun esc(s: String?): String =
-    if (s == null) "null" else "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+private fun formatDate(millis: Long): String =
+    dateFormatter.format(Date(millis))
 
-private fun listToJson(items: List<String>): String =
-    items.joinToString(prefix = "[", postfix = "]") { esc(it) }
+/**
+ * Turn your DB dream into readable Google Doc text, but treat every String as nullable.
+ */
+private fun buildDriveDocBody(e: DreamEntry): String {
+    val title = (e.title ?: "").ifBlank { "Untitled Dream" }
+    val mood = (e.mood ?: "").ifBlank { "Not captured" }
+    val lucid = e.lucid?.toString() ?: "false"
+    val intensity = e.intensityRating?.toString() ?: "-"
+    val emotion = e.emotionRating?.toString() ?: "-"
+    val lucidity = e.lucidityRating?.toString() ?: "-"
+    val tagsList = e.tags ?: emptyList()
+    val tagsLine = if (tagsList.isEmpty()) "None" else tagsList.joinToString(", ")
+    val bodyText = (e.body ?: "").ifBlank { "(No description provided)" }
+
+    return buildString {
+        appendLine(formatDate(e.createdAt))
+        appendLine(title)
+        appendLine()
+        appendLine("Mood: $mood")
+        appendLine("Lucid: $lucid")
+        appendLine("Intensity: $intensity")
+        appendLine("Emotion: $emotion")
+        appendLine("Lucidity: $lucidity")
+        appendLine("Tags: $tagsLine")
+        appendLine()
+        appendLine("Description:")
+        appendLine(bodyText)
+        if ((e.editedAt ?: 0L) != 0L) {
+            appendLine()
+            appendLine("Last edited (local): ${Date(e.editedAt!!)}")
+        }
+        appendLine()
+        appendLine("Entry id: ${e.id}")
+    }
+}

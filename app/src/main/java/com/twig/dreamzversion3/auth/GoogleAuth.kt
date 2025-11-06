@@ -8,11 +8,17 @@ import com.google.android.gms.common.api.Scope
 
 // Drive FILE scope (visible files your app creates)
 private const val DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file"
+// Docs scope (to edit Google Docs content)
+private const val DOCS_SCOPE = "https://www.googleapis.com/auth/documents"
 
 fun buildGoogleSignInClient(context: Context): GoogleSignInClient {
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestEmail()
-        .requestScopes(Scope(DRIVE_FILE_SCOPE))
+        // ask for BOTH scopes
+        .requestScopes(
+            Scope(DRIVE_FILE_SCOPE),
+            Scope(DOCS_SCOPE)
+        )
         .build()
     return GoogleSignIn.getClient(context, gso)
 }

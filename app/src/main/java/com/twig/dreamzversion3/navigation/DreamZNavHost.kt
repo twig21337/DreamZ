@@ -12,7 +12,8 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.twig.dreamzversion3.account.AccountRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignsRoute
-import com.twig.dreamzversion3.settings.SettingsRoute
+import com.twig.dreamzversion3.settings.SettingsScreen
+import com.twig.dreamzversion3.settings.SettingsUiState
 import com.twig.dreamzversion3.ui.dreams.DreamEntryRoute
 import com.twig.dreamzversion3.ui.dreams.DreamsDestinations
 import com.twig.dreamzversion3.ui.dreams.DreamsListRoute
@@ -58,13 +59,18 @@ fun DreamZNavHost(
             }
             composable(
                 route = DreamsDestinations.EDIT_ROUTE,
-                arguments = listOf(navArgument(DreamsDestinations.DREAM_ID_ARG) { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument(DreamsDestinations.DREAM_ID_ARG) {
+                        type = NavType.StringType
+                    }
+                )
             ) { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(DreamZDestination.Dreams.route)
                 }
                 val dreamsViewModel: DreamsViewModel = viewModel(parentEntry)
-                val dreamId = backStackEntry.arguments?.getString(DreamsDestinations.DREAM_ID_ARG)
+                val dreamId =
+                    backStackEntry.arguments?.getString(DreamsDestinations.DREAM_ID_ARG)
                 DreamEntryRoute(
                     onNavigateBack = { navController.popBackStack() },
                     dreamId = dreamId,
@@ -76,7 +82,15 @@ fun DreamZNavHost(
             DreamSignsRoute()
         }
         composable(DreamZDestination.Settings.route) {
-            SettingsRoute()
+            // ✅ call the screen directly with defaults so it compiles
+            SettingsScreen(
+                uiState = SettingsUiState(),
+                onThemeSelected = {},
+                onDriveTokenChanged = {},
+                onConnectDrive = {},
+                onDisconnectDrive = {},
+                onSyncNow = {}
+            )
         }
         composable(DreamZDestination.Account.route) {
             AccountRoute()

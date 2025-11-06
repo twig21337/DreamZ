@@ -9,7 +9,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private const val SCOPE = "oauth2:https://www.googleapis.com/auth/drive.file"
+// ✅ Both scopes in one string, space-separated
+private const val SCOPE =
+    "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents"
 
 /** Returns an OAuth access token for the signed-in account. */
 suspend fun fetchAccessToken(activity: Activity): String = withContext(Dispatchers.IO) {
@@ -19,7 +21,6 @@ suspend fun fetchAccessToken(activity: Activity): String = withContext(Dispatche
     try {
         GoogleAuthUtil.getToken(activity, account, SCOPE)
     } catch (e: UserRecoverableAuthException) {
-        // Intent may be null; launch only if present
         e.intent?.let { intent ->
             activity.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }

@@ -103,12 +103,12 @@
     <string name="account_drive_connected_message">Connected to Google Drive</string>
     <string name="account_drive_disconnect_message">Disconnected from Google Drive</string>
     <string name="account_drive_sign_in_canceled">Google sign-in canceled</string>
-    <string name="account_drive_connect_error">Couldn't connect: %1$s</string>
-    <string name="account_drive_connect_error_generic">Couldn't connect to Google Drive</string>
+    <string name="account_drive_connect_error">Couldn\'t connect: %1$s</string>
+    <string name="account_drive_connect_error_generic">Couldn\'t connect to Google Drive</string>
     <string name="account_drive_sync_success">Synced %1$d dreams</string>
     <string name="account_drive_sync_empty">No dreams to sync</string>
     <string name="account_drive_sync_failed_generic">Sync failed</string>
-    <string name="account_drive_authorization_failed">Couldn't authorize Google Drive access</string>
+    <string name="account_drive_authorization_failed">Couldn\'t authorize Google Drive access</string>
     <string name="account_drive_not_connected">No Google Drive account connected</string>
     <string name="account_drive_connected_as_name_email">Connected as %1$s (%2$s)</string>
     <string name="account_drive_connected_as_email">Connected as %1$s</string>
