@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DreamZ version 3</string>
-
     <string name="dreams_tab_label">Dreams</string>
     <string name="dream_signs_tab_label">Dream Signs</string>
     <string name="settings_tab_label">Settings</string>
     <string name="account_tab_label">Account</string>
-
     <string name="add_dream_fab">Add dream</string>
     <string name="recurring_dream_content_description">Recurring dream</string>
     <string name="lucid_dream_content_description">Lucid dream</string>
     <string name="lucid_dream_label">Lucid dream</string>
     <string name="lucid_dream_hint">Check this if you were aware that you were dreaming.</string>
-
     <string name="empty_dreams_title">Your dream journal is empty</string>
     <string name="empty_dreams_body">Start by adding your first dream entry.</string>
     <string name="add_dream_title">Add dream</string>
@@ -34,14 +31,13 @@
     <string name="cancel_label">Cancel</string>
     <string name="dream_toggle_to_card_view">Show detailed cards</string>
     <string name="dream_toggle_to_list_view">Show compact list</string>
-
     <string name="dream_signs_title">Dream Signs</string>
     <string name="dream_signs_promoted_section_title">Your dream signs</string>
     <string name="dream_signs_candidates_section_title">Most frequent from dreams</string>
     <string name="dream_signs_promoted_empty">Promote a dream sign to keep it pinned here.</string>
     <string name="dream_signs_no_candidates">Add more dream details or tags to discover new dream signs.</string>
     <string name="dream_signs_blacklist_section_title">Blacklist dream signs</string>
-    <string name="dream_signs_blacklist_description">Hide tokens or phrases that are not meaningful so they stop showing up below.</string>
+    <string name="dream_signs_blacklist_description">Hide unhelpful words so they no longer appear below.</string>
     <string name="dream_signs_blacklist_input_label">Add word or phrase</string>
     <string name="dream_signs_blacklist_empty">No blacklisted terms yet.</string>
     <string name="dream_signs_add_blacklist_cd">Add to blacklist</string>
@@ -53,15 +49,14 @@
     <string name="dream_signs_frequency_caption">%1$d occurrences</string>
     <string name="dream_signs_promote_button">Promote</string>
     <string name="dream_signs_promoted_chip">Promoted</string>
-    <string name="dream_signs_seen_in">Seen in %1$d dreams (%2$s)</string>
-    <string name="dream_signs_seen_in_single">Seen in %1$d dream (%2$s)</string>
+    <string name="dream_signs_seen_in">Seen in %1$d dreams: %2$s</string>
+    <string name="dream_signs_seen_in_single">Seen in %1$d dream: %2$s</string>
     <string name="dream_signs_seen_in_none">Not seen in any dreams yet</string>
-    <string name="dream_signs_source_description_both">From descriptions &amp; tags</string>
+    <string name="dream_signs_source_description_both">From descriptions and tags</string>
     <string name="dream_signs_source_description_tags">From dream tags</string>
     <string name="dream_signs_source_description_dreams">From dream descriptions</string>
     <string name="dream_signs_source_description_manual">Saved dream sign</string>
     <string name="dream_signs_remove_promoted_cd">Remove %1$s from promoted dream signs</string>
-
     <string name="settings_title">Settings</string>
     <string name="settings_theme_header">App theme</string>
     <string name="settings_theme_description">Choose how DreamZ matches your device or keeps a fixed look.</string>
