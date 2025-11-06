@@ -105,6 +105,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.1.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    implementation("androidx.navigation:navigation-compose:2.8.0")
+
     // JSON
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
