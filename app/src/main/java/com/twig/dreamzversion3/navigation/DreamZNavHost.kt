@@ -94,7 +94,17 @@ fun DreamZNavHost(
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
                 }
-                val viewModel: DreamSignsViewModel = viewModel(parentEntry)
+                val preferences = LocalUserPreferencesRepository.current
+                val viewModelFactory = remember(preferences) {
+                    DreamSignsViewModel.factory(
+                        repository = DreamRepositories.inMemory,
+                        preferences = preferences
+                    )
+                }
+                val viewModel: DreamSignsViewModel = viewModel(
+                    parentEntry,
+                    factory = viewModelFactory
+                )
                 DreamSignsRoute(
                     onManageIgnoredWords = {
                         navController.navigate(DreamSignsDestinations.IGNORED_ROUTE)
@@ -106,7 +116,17 @@ fun DreamZNavHost(
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
                 }
-                val viewModel: DreamSignsViewModel = viewModel(parentEntry)
+                val preferences = LocalUserPreferencesRepository.current
+                val viewModelFactory = remember(preferences) {
+                    DreamSignsViewModel.factory(
+                        repository = DreamRepositories.inMemory,
+                        preferences = preferences
+                    )
+                }
+                val viewModel: DreamSignsViewModel = viewModel(
+                    parentEntry,
+                    factory = viewModelFactory
+                )
                 DreamSignIgnoredWordsRoute(
                     onNavigateBack = { navController.popBackStack() },
                     viewModel = viewModel
