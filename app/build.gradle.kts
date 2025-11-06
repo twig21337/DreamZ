@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     kotlin("kapt")
-    kotlin("plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 // 1) load local.properties (safe, not committed)
@@ -91,9 +91,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-runtime:2.8.3")
+    kapt("androidx.room:room-compiler:2.8.3")
+    implementation("androidx.room:room-ktx:2.8.3")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
@@ -109,7 +109,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
     // JSON
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
 
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
