@@ -91,16 +91,29 @@
     <string name="settings_theme_light_description">Always use light.</string>
     <string name="settings_theme_dark_description">Always use dark.</string>
 
-    <!-- Drive settings -->
-    <string name="settings_drive_header">Google Drive</string>
-    <string name="settings_drive_description">Connect to back up and sync your dreams.</string>
-    <string name="settings_drive_token_label">Access token</string>
-    <string name="settings_drive_token_helper">Paste your token or connect.</string>
-    <string name="settings_drive_preview_header">Preview sync folder</string>
-    <string name="settings_drive_preview_placeholder">No files yet.</string>
-    <string name="settings_drive_sync_now">Sync now</string>
-    <string name="settings_drive_connect">Connect</string>
-    <string name="settings_drive_disconnect">Disconnect</string>
-    <string name="settings_drive_syncing">Syncing with Google Drive…</string>
+    <!-- Account screen -->
+    <string name="account_title">Account</string>
+    <string name="account_drive_header">Google Drive</string>
+    <string name="account_drive_description">Connect your Google Drive account to back up dream entries.</string>
+    <string name="account_drive_connect">Connect Google Drive</string>
+    <string name="account_drive_disconnect">Disconnect</string>
+    <string name="account_drive_sync_now">Sync dream entries</string>
+    <string name="account_drive_syncing">Syncing with Google Drive…</string>
+    <string name="account_drive_authorizing">Authorizing Google Drive…</string>
+    <string name="account_drive_connected_message">Connected to Google Drive</string>
+    <string name="account_drive_disconnect_message">Disconnected from Google Drive</string>
+    <string name="account_drive_sign_in_canceled">Google sign-in canceled</string>
+    <string name="account_drive_connect_error">Couldn't connect: %1$s</string>
+    <string name="account_drive_connect_error_generic">Couldn't connect to Google Drive</string>
+    <string name="account_drive_sync_success">Synced %1$d dreams</string>
+    <string name="account_drive_sync_empty">No dreams to sync</string>
+    <string name="account_drive_sync_failed_generic">Sync failed</string>
+    <string name="account_drive_authorization_failed">Couldn't authorize Google Drive access</string>
+    <string name="account_drive_not_connected">No Google Drive account connected</string>
+    <string name="account_drive_connected_as_name_email">Connected as %1$s (%2$s)</string>
+    <string name="account_drive_connected_as_email">Connected as %1$s</string>
+    <string name="account_drive_connected_generic">Google Drive account connected</string>
+    <string name="account_drive_preview_header">Recent Drive files</string>
+    <string name="account_drive_preview_placeholder">No files yet.</string>
 
 </resources>
