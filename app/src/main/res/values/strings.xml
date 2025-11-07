@@ -134,7 +134,7 @@
     <string name="account_drive_preview_placeholder">No files yet.</string>
 
     <!-- Dream entry snackbar + delete -->
-    <string name="dream_saved_snackbar">Dream “%1$s” saved</string>
+    <string name="dream_saved_snackbar">Dream &quot;%1$s&quot; saved</string>
     <string name="dream_deleted_snackbar">Dream deleted</string>
     <string name="dream_save_empty_error">Add a title or description before saving.</string>
     <string name="delete_dream_title">Delete dream?</string>
