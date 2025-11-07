@@ -2,7 +2,6 @@ package com.twig.dreamzversion3.ui.dreams
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +15,8 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material.icons.outlined.ViewList
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.Sort
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,8 +26,13 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -34,6 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
 import com.twig.dreamzversion3.R
 import com.twig.dreamzversion3.model.dream.Dream
 
@@ -42,6 +50,7 @@ import com.twig.dreamzversion3.model.dream.Dream
 fun DreamsListRoute(
     onAddDream: () -> Unit,
     onDreamSelected: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     viewModel: DreamsViewModel = viewModel()
 ) {
@@ -49,9 +58,12 @@ fun DreamsListRoute(
     DreamsListScreen(
         dreams = uiState.dreams,
         listMode = uiState.listMode,
+        sortOption = uiState.sortOption,
         onAddDream = onAddDream,
         onDreamSelected = onDreamSelected,
         onToggleListMode = viewModel::toggleListMode,
+        onSortOptionSelected = viewModel::selectSortOption,
+        snackbarHostState = snackbarHostState,
         modifier = modifier
     )
 }
@@ -61,17 +73,45 @@ fun DreamsListRoute(
 fun DreamsListScreen(
     dreams: List<Dream>,
     listMode: DreamListMode,
+    sortOption: DreamSortOption,
     onAddDream: () -> Unit,
     onDreamSelected: (String) -> Unit,
     onToggleListMode: () -> Unit,
+    onSortOptionSelected: (DreamSortOption) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
+    var sortMenuExpanded by remember { mutableStateOf(false) }
+    val sortLabel = stringResource(id = sortOption.labelRes)
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.dreams_tab_label)) },
                 actions = {
+                    IconButton(onClick = { sortMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Sort,
+                            contentDescription = stringResource(id = R.string.dream_sort_content_description)
+                        )
+                    }
+                    DropdownMenu(expanded = sortMenuExpanded, onDismissRequest = { sortMenuExpanded = false }) {
+                        DreamSortOption.values().forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = option.labelRes)) },
+                                onClick = {
+                                    sortMenuExpanded = false
+                                    onSortOptionSelected(option)
+                                },
+                                trailingIcon = {
+                                    if (option == sortOption) {
+                                        Icon(imageVector = Icons.Outlined.Check, contentDescription = null)
+                                    }
+                                }
+                            )
+                        }
+                    }
                     IconButton(onClick = onToggleListMode) {
                         val icon = when (listMode) {
                             DreamListMode.List -> Icons.Outlined.ViewAgenda
@@ -99,12 +139,14 @@ fun DreamsListScreen(
                 DreamListMode.List -> DreamsTitleList(
                     dreams = dreams,
                     contentPadding = innerPadding,
-                    onDreamSelected = onDreamSelected
+                    onDreamSelected = onDreamSelected,
+                    sortLabel = sortLabel
                 )
                 DreamListMode.Card -> DreamsDetailList(
                     dreams = dreams,
                     contentPadding = innerPadding,
-                    onDreamSelected = onDreamSelected
+                    onDreamSelected = onDreamSelected,
+                    sortLabel = sortLabel
                 )
             }
         }
@@ -116,6 +158,7 @@ private fun DreamsTitleList(
     dreams: List<Dream>,
     contentPadding: PaddingValues,
     onDreamSelected: (String) -> Unit,
+    sortLabel: String,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -123,6 +166,9 @@ private fun DreamsTitleList(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        item(key = "sort_label_header") {
+            SortHeader(text = sortLabel)
+        }
         items(dreams, key = { it.id }) { dream ->
             OutlinedCard(
                 modifier = Modifier
@@ -156,6 +202,7 @@ private fun DreamsDetailList(
     dreams: List<Dream>,
     contentPadding: PaddingValues,
     onDreamSelected: (String) -> Unit,
+    sortLabel: String,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -163,6 +210,9 @@ private fun DreamsDetailList(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        item(key = "sort_label_header") {
+            SortHeader(text = sortLabel)
+        }
         items(dreams, key = { it.id }) { dream ->
             OutlinedCard(
                 modifier = Modifier
@@ -225,6 +275,18 @@ private fun DreamsDetailList(
             }
         }
     }
+}
+
+@Composable
+private fun SortHeader(text: String) {
+    Text(
+        text = stringResource(id = R.string.dream_sort_active_label, text),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+    )
 }
 
 @Composable

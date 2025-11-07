@@ -85,6 +85,18 @@
     <string name="dream_signs_empty_state_title">No dream signs yet</string>
     <string name="dream_signs_empty_state_body">Add more dreams or tags to see common patterns.</string>
 
+    <!-- Sorting -->
+    <string name="dream_sort_content_description">Change sort order</string>
+    <string name="dream_sort_recent">Newest first</string>
+    <string name="dream_sort_oldest">Oldest first</string>
+    <string name="dream_sort_mood">Mood (A–Z)</string>
+    <string name="dream_sort_tag">Tag (A–Z)</string>
+    <string name="dream_sort_intensity">Intensity (high to low)</string>
+    <string name="dream_sort_emotion">Emotion (high to low)</string>
+    <string name="dream_sort_lucid">Lucid dreams first</string>
+    <string name="dream_sort_recurring">Recurring dreams first</string>
+    <string name="dream_sort_active_label">Sorted by %1$s</string>
+
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_theme_header">Theme</string>
@@ -120,5 +132,31 @@
     <string name="account_drive_connected_generic">Google Drive account connected</string>
     <string name="account_drive_preview_header">Recent Drive files</string>
     <string name="account_drive_preview_placeholder">No files yet.</string>
+
+    <!-- Dream entry snackbar + delete -->
+    <string name="dream_saved_snackbar">Dream “%1$s” saved</string>
+    <string name="dream_deleted_snackbar">Dream deleted</string>
+    <string name="dream_save_empty_error">Add a title or description before saving.</string>
+    <string name="delete_dream_title">Delete dream?</string>
+    <string name="delete_dream_message">Are you sure you want to delete this dream? This action cannot be undone.</string>
+    <string name="delete_dream_confirm">Delete</string>
+    <string name="delete_dream_cta">Delete dream</string>
+    <string name="dream_delete_error">We couldn&apos;t delete that dream.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to DreamZ</string>
+    <string name="onboarding_welcome_body">Capture your dreams, track recurring themes, and uncover patterns to boost your lucid dreaming journey.</string>
+    <string name="onboarding_drive_title">Connect Google Drive</string>
+    <string name="onboarding_drive_body">Back up entries securely to Google Drive so your journal is always safe.</string>
+    <string name="onboarding_drive_skip">Skip for now</string>
+    <string name="onboarding_drive_connected">Google Drive connected</string>
+    <string name="onboarding_drive_cancelled">Google Drive sign-in canceled</string>
+    <string name="onboarding_drive_failed">Couldn&apos;t connect to Google Drive</string>
+    <string name="onboarding_ready_title">Ready to dream</string>
+    <string name="onboarding_ready_body">Use Quick Add to jot down dream fragments in seconds and switch to dark mode for midnight reflections.</string>
+    <string name="onboarding_ready_connected_account">Linked to %1$s</string>
+    <string name="onboarding_start_button">Let&apos;s begin</string>
+    <string name="onboarding_drive_connect_button">Connect Google Drive</string>
+    <string name="onboarding_finish_button">Start journaling</string>
 
 </resources>

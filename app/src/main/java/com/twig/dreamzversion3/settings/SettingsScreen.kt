@@ -1,16 +1,19 @@
 package com.twig.dreamzversion3.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,37 +34,63 @@ fun SettingsScreen(
     onConnectDrive: () -> Unit = {},
     onDisconnectDrive: () -> Unit = {},
     onSyncNow: () -> Unit = {},
+    snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text(
-            text = stringResource(id = R.string.settings_title),
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(id = R.string.settings_theme_header),
-            style = MaterialTheme.typography.titleMedium
-        )
-        Text(
-            text = stringResource(id = R.string.settings_theme_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        uiState.availableThemeModes.forEach { mode ->
-            ThemeModeRow(
-                mode = mode,
-                selected = mode == uiState.themeMode,
-                onSelected = { onThemeSelected(mode) }
+    Scaffold(
+        modifier = modifier,
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.settings_title),
+                style = MaterialTheme.typography.headlineSmall
             )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(id = R.string.settings_theme_header),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = stringResource(id = R.string.settings_theme_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                uiState.availableThemeModes.forEach { mode ->
+                    ThemeModeRow(
+                        mode = mode,
+                        selected = mode == uiState.themeMode,
+                        onSelected = { onThemeSelected(mode) }
+                    )
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(id = R.string.account_drive_header),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Button(
+                    onClick = onSyncNow,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isSyncing
+                ) {
+                    Text(text = stringResource(id = R.string.account_drive_sync_now))
+                }
+                uiState.syncMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

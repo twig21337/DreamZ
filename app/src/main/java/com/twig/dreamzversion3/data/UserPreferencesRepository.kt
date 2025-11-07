@@ -25,6 +25,7 @@ private val KEY_BACKUP_FREQUENCY = stringPreferencesKey("backup_frequency")
 private val KEY_DRIVE_TOKEN = stringPreferencesKey("drive_token")
 private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
 private val KEY_DREAM_SIGN_BLACKLIST = stringPreferencesKey("dream_sign_blacklist")
+private val KEY_ONBOARDING_COMPLETE = androidx.datastore.preferences.core.booleanPreferencesKey("onboarding_complete")
 
 val Context.userPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "user_preferences",
@@ -71,6 +72,10 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
 
     val backupFrequencyFlow: Flow<BackupFrequency> = dataStore.data.map { prefs ->
         prefs[KEY_BACKUP_FREQUENCY]?.let { BackupFrequency.valueOf(it) } ?: BackupFrequency.OFF
+    }
+
+    val onboardingCompletedFlow: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_ONBOARDING_COMPLETE] ?: false
     }
 
     suspend fun persistDraft(draft: DreamDraft) {
@@ -142,6 +147,16 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     suspend fun getDriveToken(): String? = dataStore.data.first()[KEY_DRIVE_TOKEN]
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { prefs ->
+            if (completed) {
+                prefs[KEY_ONBOARDING_COMPLETE] = true
+            } else {
+                prefs.remove(KEY_ONBOARDING_COMPLETE)
+            }
+        }
+    }
 
     val dreamSignBlacklistFlow: Flow<Set<String>> = dataStore.data.map { prefs ->
         prefs[KEY_DREAM_SIGN_BLACKLIST]

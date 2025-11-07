@@ -1,15 +1,23 @@
 package com.twig.dreamzversion3.ui.dreams
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,33 +26,52 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamEntryRoute(
     onNavigateBack: () -> Unit,
+    onShowMessage: (String) -> Unit,
     dreamId: String? = null,
     modifier: Modifier = Modifier,
     viewModel: DreamsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showSuccessCheck by remember { mutableStateOf(false) }
     LaunchedEffect(dreamId) {
+        showDeleteDialog = false
+        showSuccessCheck = false
         if (dreamId != null) {
             viewModel.startEditing(dreamId)
         } else {
@@ -56,6 +83,31 @@ fun DreamEntryRoute(
             viewModel.resetEntry()
         }
     }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is DreamEditorEvent.DreamSaved -> {
+                    showSuccessCheck = true
+                    onShowMessage(context.getString(R.string.dream_saved_snackbar, event.title))
+                    delay(900)
+                    onNavigateBack()
+                }
+                DreamEditorEvent.DreamDeleted -> {
+                    onShowMessage(context.getString(R.string.dream_deleted_snackbar))
+                    delay(600)
+                    onNavigateBack()
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(showSuccessCheck) {
+        if (showSuccessCheck) {
+            delay(1200)
+            showSuccessCheck = false
+        }
+    }
+
     DreamEntryScreen(
         entryState = uiState.entry,
         onTitleChange = viewModel::onTitleChange,
@@ -66,11 +118,35 @@ fun DreamEntryRoute(
         onIntensityChange = viewModel::onIntensityChange,
         onEmotionChange = viewModel::onEmotionChange,
         onRecurringChange = viewModel::onRecurringChange,
-        onSave = { viewModel.saveDream(onSaved = onNavigateBack) },
+        onSave = {
+            val saved = viewModel.saveDream()
+            if (!saved) {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.dream_save_empty_error)
+                    )
+                }
+            }
+        },
         onCancel = {
             viewModel.resetEntry()
             onNavigateBack()
         },
+        onDeleteClick = { showDeleteDialog = true },
+        onConfirmDelete = {
+            if (!viewModel.deleteCurrentDream()) {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.dream_delete_error)
+                    )
+                }
+            }
+        },
+        onDismissDelete = { showDeleteDialog = false },
+        showDeleteDialog = showDeleteDialog,
+        showDeleteButton = uiState.entry.isEditing,
+        snackbarHostState = snackbarHostState,
+        showSuccessCheck = showSuccessCheck,
         modifier = modifier
     )
 }
@@ -89,10 +165,18 @@ fun DreamEntryScreen(
     onRecurringChange: (Boolean) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onConfirmDelete: () -> Unit,
+    onDismissDelete: () -> Unit,
+    showDeleteDialog: Boolean,
+    showDeleteButton: Boolean,
+    snackbarHostState: SnackbarHostState,
+    showSuccessCheck: Boolean,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -114,74 +198,126 @@ fun DreamEntryScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            OutlinedTextField(
-                value = entryState.title,
-                onValueChange = onTitleChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.dream_title_label)) }
-            )
-            OutlinedTextField(
-                value = entryState.description,
-                onValueChange = onDescriptionChange,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.dream_description_label)) },
-                supportingText = { Text(text = stringResource(id = R.string.dream_description_support)) },
-                minLines = 4
-            )
-            OutlinedTextField(
-                value = entryState.tagsInput,
-                onValueChange = onTagsInputChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.dream_tags_label)) },
-                supportingText = { Text(text = stringResource(id = R.string.dream_tags_support)) }
-            )
-            OutlinedTextField(
-                value = entryState.mood,
-                onValueChange = onMoodChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.dream_mood_label)) }
-            )
-            LucidDreamCheckbox(
-                checked = entryState.isLucid,
-                onCheckedChange = onLucidChange
-            )
-            EntrySlider(
-                label = stringResource(id = R.string.dream_intensity_label),
-                value = entryState.intensity,
-                onValueChange = onIntensityChange
-            )
-            EntrySlider(
-                label = stringResource(id = R.string.dream_emotion_label),
-                value = entryState.emotion,
-                onValueChange = onEmotionChange
-            )
-            RowWithSwitch(
-                checked = entryState.isRecurring,
-                onCheckedChange = onRecurringChange
-            )
-            Button(
-                onClick = onSave,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = entryState.title.isNotBlank() || entryState.description.isNotBlank()
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(text = stringResource(id = R.string.save_dream_cta))
+                OutlinedTextField(
+                    value = entryState.title,
+                    onValueChange = onTitleChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = stringResource(id = R.string.dream_title_label)) }
+                )
+                OutlinedTextField(
+                    value = entryState.description,
+                    onValueChange = onDescriptionChange,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    label = { Text(text = stringResource(id = R.string.dream_description_label)) },
+                    supportingText = { Text(text = stringResource(id = R.string.dream_description_support)) },
+                    minLines = 4
+                )
+                OutlinedTextField(
+                    value = entryState.tagsInput,
+                    onValueChange = onTagsInputChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = stringResource(id = R.string.dream_tags_label)) },
+                    supportingText = { Text(text = stringResource(id = R.string.dream_tags_support)) }
+                )
+                OutlinedTextField(
+                    value = entryState.mood,
+                    onValueChange = onMoodChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = stringResource(id = R.string.dream_mood_label)) }
+                )
+                LucidDreamCheckbox(
+                    checked = entryState.isLucid,
+                    onCheckedChange = onLucidChange
+                )
+                EntrySlider(
+                    label = stringResource(id = R.string.dream_intensity_label),
+                    value = entryState.intensity,
+                    onValueChange = onIntensityChange
+                )
+                EntrySlider(
+                    label = stringResource(id = R.string.dream_emotion_label),
+                    value = entryState.emotion,
+                    onValueChange = onEmotionChange
+                )
+                RowWithSwitch(
+                    checked = entryState.isRecurring,
+                    onCheckedChange = onRecurringChange
+                )
+                if (showDeleteButton) {
+                    OutlinedButton(
+                        onClick = onDeleteClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(imageVector = Icons.Outlined.Delete, contentDescription = null)
+                        Text(
+                            text = stringResource(id = R.string.delete_dream_cta),
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+                Button(
+                    onClick = onSave,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = entryState.title.isNotBlank() || entryState.description.isNotBlank()
+                ) {
+                    Text(text = stringResource(id = R.string.save_dream_cta))
+                }
+                TextButton(
+                    onClick = onCancel,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(text = stringResource(id = R.string.cancel_label))
+                }
             }
-            TextButton(
-                onClick = onCancel,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+            AnimatedVisibility(
+                visible = showSuccessCheck,
+                enter = scaleIn(animationSpec = tween(300)) ,
+                exit = scaleOut(animationSpec = tween(200)),
+                modifier = Modifier
+                    .align(Alignment.Center)
             ) {
-                Text(text = stringResource(id = R.string.cancel_label))
+                Icon(
+                    imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(96.dp)
+                )
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = onDismissDelete,
+            title = { Text(text = stringResource(id = R.string.delete_dream_title)) },
+            text = { Text(text = stringResource(id = R.string.delete_dream_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDismissDelete()
+                    onConfirmDelete()
+                }) {
+                    Text(text = stringResource(id = R.string.delete_dream_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissDelete) {
+                    Text(text = stringResource(id = R.string.cancel_label))
+                }
+            }
+        )
     }
 }
 

@@ -11,6 +11,7 @@ interface DreamRepository {
     val dreams: StateFlow<List<Dream>>
     fun addDream(dream: Dream)
     fun updateDream(dream: Dream)
+    fun deleteDream(id: String)
     fun getDream(id: String): Dream?
     fun getDreams(): List<Dream>
 }
@@ -27,6 +28,10 @@ class InMemoryDreamRepository : DreamRepository {
         _dreams.update { current ->
             current.map { existing -> if (existing.id == dream.id) dream else existing }
         }
+    }
+
+    override fun deleteDream(id: String) {
+        _dreams.update { current -> current.filterNot { it.id == id } }
     }
 
     override fun getDream(id: String): Dream? {

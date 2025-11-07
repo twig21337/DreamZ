@@ -27,6 +27,11 @@ import com.twig.dreamzversion3.ui.dreams.DreamEntryRoute
 import com.twig.dreamzversion3.ui.dreams.DreamsDestinations
 import com.twig.dreamzversion3.ui.dreams.DreamsListRoute
 import com.twig.dreamzversion3.ui.dreams.DreamsViewModel
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import com.twig.dreamzversion3.R
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun DreamZNavHost(
@@ -56,11 +61,25 @@ fun DreamZNavHost(
                     parentEntry,
                     factory = dreamsViewModelFactory
                 )
+                val snackbarHostState = remember { SnackbarHostState() }
+                val snackbarMessages = backStackEntry.savedStateHandle.getStateFlow(
+                    DreamsDestinations.SNACKBAR_RESULT_KEY,
+                    null as String?
+                )
+                LaunchedEffect(snackbarMessages) {
+                    snackbarMessages.collectLatest { message ->
+                        if (!message.isNullOrBlank()) {
+                            snackbarHostState.showSnackbar(message)
+                            backStackEntry.savedStateHandle[DreamsDestinations.SNACKBAR_RESULT_KEY] = null
+                        }
+                    }
+                }
                 DreamsListRoute(
                     onAddDream = { navController.navigate(DreamsDestinations.ADD_ROUTE) },
                     onDreamSelected = { dreamId ->
                         navController.navigate(DreamsDestinations.editRoute(dreamId))
                     },
+                    snackbarHostState = snackbarHostState,
                     viewModel = dreamsViewModel
                 )
             }
@@ -74,6 +93,12 @@ fun DreamZNavHost(
                 )
                 DreamEntryRoute(
                     onNavigateBack = { navController.popBackStack() },
+                    onShowMessage = { message ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            DreamsDestinations.SNACKBAR_RESULT_KEY,
+                            message
+                        )
+                    },
                     dreamId = null,
                     viewModel = dreamsViewModel
                 )
@@ -97,6 +122,12 @@ fun DreamZNavHost(
                     backStackEntry.arguments?.getString(DreamsDestinations.DREAM_ID_ARG)
                 DreamEntryRoute(
                     onNavigateBack = { navController.popBackStack() },
+                    onShowMessage = { message ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            DreamsDestinations.SNACKBAR_RESULT_KEY,
+                            message
+                        )
+                    },
                     dreamId = dreamId,
                     viewModel = dreamsViewModel
                 )
@@ -159,13 +190,29 @@ fun DreamZNavHost(
                 )
             )
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val snackbarHostState = remember { SnackbarHostState() }
+            val context = LocalContext.current
+            val lastSyncedCount = remember { mutableIntStateOf(-1) }
+            LaunchedEffect(uiState.lastSyncedCount) {
+                val count = uiState.lastSyncedCount ?: return@LaunchedEffect
+                if (count != lastSyncedCount.intValue) {
+                    val message = if (count > 0) {
+                        context.getString(R.string.account_drive_sync_success, count)
+                    } else {
+                        context.getString(R.string.account_drive_sync_empty)
+                    }
+                    snackbarHostState.showSnackbar(message)
+                    lastSyncedCount.intValue = count
+                }
+            }
             SettingsScreen(
                 uiState = uiState,
                 onThemeSelected = viewModel::onThemeSelected,
                 onDriveTokenChanged = viewModel::onDriveTokenChange,
                 onConnectDrive = viewModel::connectDrive,
                 onDisconnectDrive = viewModel::disconnectDrive,
-                onSyncNow = viewModel::syncNow
+                onSyncNow = viewModel::syncNow,
+                snackbarHostState = snackbarHostState
             )
         }
         composable(DreamZDestination.Account.route) {

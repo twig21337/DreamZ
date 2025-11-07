@@ -1,5 +1,7 @@
 package com.twig.dreamzversion3
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -17,12 +19,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
 import com.twig.dreamzversion3.data.ThemeMode
 import com.twig.dreamzversion3.data.UserPreferencesRepository
@@ -31,6 +35,10 @@ import com.twig.dreamzversion3.navigation.DreamZDestination
 import com.twig.dreamzversion3.navigation.DreamZDestinations
 import com.twig.dreamzversion3.navigation.DreamZNavHost
 import com.twig.dreamzversion3.ui.theme.DreamZVersion3Theme
+import com.twig.dreamzversion3.ui.theme.AuroraGradient
+import com.twig.dreamzversion3.ui.theme.MidnightGradient
+import com.twig.dreamzversion3.ui.onboarding.OnboardingRoute
+import com.twig.dreamzversion3.ui.onboarding.OnboardingViewModel
 
 @Composable
 fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
@@ -39,24 +47,44 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
         UserPreferencesRepository(context.userPreferencesDataStore)
     }
     val themeMode by preferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+    val onboardingCompleted by preferences.onboardingCompletedFlow.collectAsState(initial = false)
     val systemDark = isSystemInDarkTheme()
     val useDarkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> systemDark
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
+    val onboardingViewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModel.factory(preferences)
+    )
+    val backgroundBrush = if (useDarkTheme) MidnightGradient else AuroraGradient
 
     CompositionLocalProvider(LocalUserPreferencesRepository provides preferences) {
         DreamZVersion3Theme(darkTheme = useDarkTheme) {
-            Scaffold(
-                bottomBar = { DreamZBottomBar(appState) }
-            ) { innerPadding ->
-                DreamZNavHost(
-                    navController = appState.navController,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundBrush)
+            ) {
+                if (!onboardingCompleted) {
+                    OnboardingRoute(
+                        onFinished = {},
+                        viewModel = onboardingViewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Scaffold(
+                        containerColor = Color.Transparent,
+                        bottomBar = { DreamZBottomBar(appState) }
+                    ) { innerPadding ->
+                        DreamZNavHost(
+                            navController = appState.navController,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        )
+                    }
+                }
             }
         }
     }

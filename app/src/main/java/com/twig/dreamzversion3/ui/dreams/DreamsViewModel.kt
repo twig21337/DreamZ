@@ -1,20 +1,25 @@
 package com.twig.dreamzversion3.ui.dreams
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.twig.dreamzversion3.R
 import com.twig.dreamzversion3.data.dream.DreamRepository
 import com.twig.dreamzversion3.model.dream.Dream
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.launch
 
 class DreamsViewModel(
     private val repository: DreamRepository
@@ -24,13 +29,23 @@ class DreamsViewModel(
     private val dreamEntryState: StateFlow<DreamEntryUiState> = _dreamEntryState.asStateFlow()
     private val _listMode = MutableStateFlow(DreamListMode.Card)
     private val listMode: StateFlow<DreamListMode> = _listMode.asStateFlow()
+    private val _sortOption = MutableStateFlow(DreamSortOption.DateNewest)
+    private val sortOption: StateFlow<DreamSortOption> = _sortOption.asStateFlow()
+    private val _events = MutableSharedFlow<DreamEditorEvent>(extraBufferCapacity = 1)
+    val events = _events.asSharedFlow()
 
     val uiState: StateFlow<DreamsUiState> = combine(
         repository.dreams,
         dreamEntryState,
-        listMode
-    ) { dreams, entry, mode ->
-        DreamsUiState(dreams = dreams, entry = entry, listMode = mode)
+        listMode,
+        sortOption
+    ) { dreams, entry, mode, sort ->
+        DreamsUiState(
+            dreams = dreams.sortedWith(sort.comparator),
+            entry = entry,
+            listMode = mode,
+            sortOption = sort
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -69,10 +84,10 @@ class DreamsViewModel(
         _dreamEntryState.update { it.copy(isRecurring = isRecurring) }
     }
 
-    fun saveDream(onSaved: () -> Unit) {
+    fun saveDream(): Boolean {
         val entry = dreamEntryState.value
         if (entry.title.isBlank() && entry.description.isBlank()) {
-            return
+            return false
         }
 
         val now = System.currentTimeMillis()
@@ -96,8 +111,21 @@ class DreamsViewModel(
         } else {
             repository.addDream(dream)
         }
+        viewModelScope.launch {
+            _events.emit(DreamEditorEvent.DreamSaved(dream.title))
+        }
         resetEntry()
-        onSaved()
+        return true
+    }
+
+    fun deleteCurrentDream(): Boolean {
+        val dreamId = dreamEntryState.value.dreamId ?: return false
+        repository.deleteDream(dreamId)
+        viewModelScope.launch {
+            _events.emit(DreamEditorEvent.DreamDeleted)
+        }
+        resetEntry()
+        return true
     }
 
     fun resetEntry() {
@@ -133,6 +161,10 @@ class DreamsViewModel(
         }
     }
 
+    fun selectSortOption(option: DreamSortOption) {
+        _sortOption.value = option
+    }
+
     companion object {
         fun factory(repository: DreamRepository): ViewModelProvider.Factory = viewModelFactory {
             initializer { DreamsViewModel(repository) }
@@ -143,7 +175,8 @@ class DreamsViewModel(
 data class DreamsUiState(
     val dreams: List<Dream> = emptyList(),
     val entry: DreamEntryUiState = DreamEntryUiState(),
-    val listMode: DreamListMode = DreamListMode.Card
+    val listMode: DreamListMode = DreamListMode.Card,
+    val sortOption: DreamSortOption = DreamSortOption.DateNewest
 )
 
 data class DreamEntryUiState(
@@ -169,4 +202,31 @@ data class DreamEntryUiState(
 enum class DreamListMode {
     List,
     Card
+}
+
+enum class DreamSortOption(@StringRes val labelRes: Int) {
+    DateNewest(R.string.dream_sort_recent),
+    DateOldest(R.string.dream_sort_oldest),
+    Mood(R.string.dream_sort_mood),
+    Tag(R.string.dream_sort_tag),
+    Intensity(R.string.dream_sort_intensity),
+    Emotion(R.string.dream_sort_emotion),
+    Lucid(R.string.dream_sort_lucid),
+    Recurring(R.string.dream_sort_recurring);
+
+    val comparator: Comparator<Dream> = when (this) {
+        DateNewest -> compareByDescending<Dream> { it.createdAt }
+        DateOldest -> compareBy { it.createdAt }
+        Mood -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.mood.ifBlank { "~" } }
+        Tag -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.tags.firstOrNull()?.ifBlank { "~" } ?: "~" }
+        Intensity -> compareByDescending<Dream> { it.intensity }
+        Emotion -> compareByDescending<Dream> { it.emotion }
+        Lucid -> compareBy<Dream> { if (it.isLucid) 0 else 1 }.thenByDescending { it.createdAt }
+        Recurring -> compareBy<Dream> { if (it.isRecurring) 0 else 1 }.thenByDescending { it.createdAt }
+    }
+}
+
+sealed class DreamEditorEvent {
+    data class DreamSaved(val title: String) : DreamEditorEvent()
+    data object DreamDeleted : DreamEditorEvent()
 }

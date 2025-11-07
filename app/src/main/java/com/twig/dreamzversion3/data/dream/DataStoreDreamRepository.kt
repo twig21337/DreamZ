@@ -73,6 +73,12 @@ class DataStoreDreamRepository(
         }
     }
 
+    override fun deleteDream(id: String) {
+        scope.launch {
+            persist { current -> current.filterNot { it.id == id } }
+        }
+    }
+
     override fun getDream(id: String): Dream? = dreams.value.firstOrNull { it.id == id }
 
     override fun getDreams(): List<Dream> = dreams.value
