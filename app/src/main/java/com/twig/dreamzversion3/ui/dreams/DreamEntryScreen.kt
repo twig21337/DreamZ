@@ -231,13 +231,12 @@ fun DreamEntryScreen(
             .filter { it.isNotEmpty() }
             .toSet()
     }
-    val highlightStyle = remember(
-        MaterialTheme.colorScheme.tertiaryContainer,
-        MaterialTheme.colorScheme.onTertiaryContainer
-    ) {
+    val tertiaryContainer = MaterialTheme.colorScheme.tertiaryContainer
+    val onTertiaryContainer = MaterialTheme.colorScheme.onTertiaryContainer
+    val highlightStyle = remember(tertiaryContainer, onTertiaryContainer) {
         SpanStyle(
-            background = MaterialTheme.colorScheme.tertiaryContainer,
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            background = tertiaryContainer,
+            color = onTertiaryContainer,
             fontWeight = FontWeight.SemiBold
         )
     }
