@@ -4,11 +4,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.ExperimentalLayoutApi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -62,10 +62,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -642,51 +645,53 @@ private fun EntrySlider(
     }
 }
 
-@Composable
-private fun Modifier.bringIntoViewOnFocus(): Modifier {
+private fun Modifier.bringIntoViewOnFocus(): Modifier = composed {
     val requester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
-    return this
-        .bringIntoViewRequester(requester)
-        .onFocusChanged { focusState ->
-            if (focusState.isFocused) {
-                coroutineScope.launch { requester.bringIntoView() }
+    this.then(
+        Modifier
+            .bringIntoViewRequester(requester)
+            .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    coroutineScope.launch { requester.bringIntoView() }
+                }
             }
-        }
+    )
 }
 
-@Composable
 private fun Modifier.dreamSwipeGesture(
     onSwipeLeft: (() -> Unit)?,
     onSwipeRight: (() -> Unit)?,
     threshold: Dp = 96.dp
-): Modifier {
+): Modifier = composed {
     val leftHandler by rememberUpdatedState(onSwipeLeft)
     val rightHandler by rememberUpdatedState(onSwipeRight)
     val density = LocalDensity.current
     val thresholdPx = remember(threshold, density) { with(density) { threshold.toPx() } }
-    return if (leftHandler == null && rightHandler == null) {
+    if (leftHandler == null && rightHandler == null) {
         this
     } else {
-        pointerInput(leftHandler, rightHandler, thresholdPx) {
-            var totalDrag = 0f
-            detectHorizontalDragGestures(
-                onDragStart = { totalDrag = 0f },
-                onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
-                onDragCancel = { totalDrag = 0f },
-                onDragEnd = {
-                    val drag = totalDrag
-                    if (abs(drag) >= thresholdPx) {
-                        if (drag < 0 && leftHandler != null) {
-                            leftHandler?.invoke()
-                        } else if (drag > 0 && rightHandler != null) {
-                            rightHandler?.invoke()
+        this.then(
+            Modifier.pointerInput(leftHandler, rightHandler, thresholdPx) {
+                var totalDrag = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { totalDrag = 0f },
+                    onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
+                    onDragCancel = { totalDrag = 0f },
+                    onDragEnd = {
+                        val drag = totalDrag
+                        if (abs(drag) >= thresholdPx) {
+                            if (drag < 0 && leftHandler != null) {
+                                leftHandler?.invoke()
+                            } else if (drag > 0 && rightHandler != null) {
+                                rightHandler?.invoke()
+                            }
                         }
+                        totalDrag = 0f
                     }
-                    totalDrag = 0f
-                }
-            )
-        }
+                )
+            }
+        )
     }
 }
 
