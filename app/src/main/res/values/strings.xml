@@ -56,19 +56,11 @@
     <string name="insights_weekly_summary_empty">No dreams logged in the last week.</string>
     <string name="insights_lucidity_frequency_title">Lucidity frequency</string>
     <string name="insights_lucidity_frequency_empty">Start logging lucid dreams to see weekly trends.</string>
-    <string name="insights_emotion_trend_title">Emotion trend</string>
-    <string name="insights_emotion_trend_empty">We\'ll chart your emotions once you add dreams.</string>
     <string name="insights_top_dream_signs_title">Top dream signs</string>
     <string name="insights_top_dream_signs_empty">We haven\'t found any standout dream signs yet.</string>
-    <string name="insights_heatmap_title">Dream sign heatmap</string>
-    <string name="insights_heatmap_empty">Log more dreams to reveal when your dream signs appear.</string>
     <string name="insights_percentage_value">%1$d%%</string>
     <string name="insights_ranked_sign_label">%1$d. %2$s</string>
     <string name="insights_dream_sign_count">%1$d sightings</string>
-    <string name="insights_segment_early_morning">Late night</string>
-    <string name="insights_segment_morning">Morning</string>
-    <string name="insights_segment_afternoon">Afternoon</string>
-    <string name="insights_segment_night">Evening</string>
 
     <!-- Blacklist section -->
     <string name="dream_signs_blacklist_section_title">Ignored words</string>

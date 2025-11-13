@@ -2,6 +2,7 @@ package com.twig.dreamzversion3
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -20,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -137,7 +139,13 @@ private fun DreamZBottomBar(appState: DreamZAppState) {
                         contentDescription = stringResource(destination.labelResId)
                     )
                 },
-                label = { Text(text = stringResource(destination.labelResId)) },
+                label = {
+                    Text(
+                        text = stringResource(destination.labelResId),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
                 alwaysShowLabel = true
             )
         }
