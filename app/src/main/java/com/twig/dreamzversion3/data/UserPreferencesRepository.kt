@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.twig.dreamzversion3.ui.theme.ColorCombo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -24,6 +25,7 @@ private val KEY_LAYOUT_MODE = stringPreferencesKey("layout_mode")
 private val KEY_BACKUP_FREQUENCY = stringPreferencesKey("backup_frequency")
 private val KEY_DRIVE_TOKEN = stringPreferencesKey("drive_token")
 private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+private val KEY_COLOR_COMBO = stringPreferencesKey("color_combo")
 private val KEY_DREAM_SIGN_BLACKLIST = stringPreferencesKey("dream_sign_blacklist")
 private val KEY_PROMOTED_DREAM_SIGNS = stringPreferencesKey("promoted_dream_signs")
 private val KEY_ONBOARDING_COMPLETE = androidx.datastore.preferences.core.booleanPreferencesKey("onboarding_complete")
@@ -51,6 +53,12 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         prefs[KEY_THEME_MODE]?.let { stored ->
             runCatching { ThemeMode.valueOf(stored) }.getOrNull()
         } ?: ThemeMode.SYSTEM
+    }
+
+    val colorComboFlow: Flow<ColorCombo> = dataStore.data.map { prefs ->
+        prefs[KEY_COLOR_COMBO]?.let { stored ->
+            runCatching { ColorCombo.valueOf(stored) }.getOrNull()
+        } ?: ColorCombo.AURORA
     }
 
     val isDarkThemeFlow: Flow<Boolean> = dataStore.data.map { prefs ->
@@ -120,6 +128,12 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                 ThemeMode.LIGHT -> prefs[KEY_DARK_THEME] = false
                 ThemeMode.SYSTEM -> prefs.remove(KEY_DARK_THEME)
             }
+        }
+    }
+
+    suspend fun setColorCombo(colorCombo: ColorCombo) {
+        dataStore.edit { prefs ->
+            prefs[KEY_COLOR_COMBO] = colorCombo.name
         }
     }
 

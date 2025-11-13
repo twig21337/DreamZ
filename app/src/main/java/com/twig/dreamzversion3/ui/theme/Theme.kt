@@ -4,7 +4,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
     primary = AuroraTeal,
@@ -21,14 +20,12 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = Starlight.copy(alpha = 0.72f)
 )
 
-private val LightSurface = Color(0xFFFBF9FF)
-
 private val LightColorScheme = lightColorScheme(
     primary = AuroraViolet,
     secondary = AuroraTeal,
     tertiary = AuroraRose,
     background = LightSurface,
-    surface = Color.White,
+    surface = androidx.compose.ui.graphics.Color.White,
     onPrimary = Starlight,
     onSecondary = Midnight900,
     onTertiary = Midnight900,
@@ -41,12 +38,23 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun DreamZVersion3Theme(
     darkTheme: Boolean,
+    colorCombo: ColorCombo,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val baseScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val backgroundColor = colorCombo.backgroundColor(darkTheme)
+    val foregroundColor = colorCombo.foregroundColor(darkTheme)
+    val scheme = baseScheme.copy(
+        background = backgroundColor,
+        surface = backgroundColor,
+        surfaceVariant = backgroundColor,
+        onBackground = foregroundColor,
+        onSurface = foregroundColor,
+        onSurfaceVariant = foregroundColor.copy(alpha = 0.72f)
+    )
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = scheme,
         typography = Typography,
         shapes = Shapes,
         content = content

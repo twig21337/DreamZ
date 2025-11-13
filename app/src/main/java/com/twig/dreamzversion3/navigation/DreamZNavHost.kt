@@ -213,6 +213,7 @@ fun DreamZNavHost(
             SettingsScreen(
                 uiState = uiState,
                 onThemeSelected = viewModel::onThemeSelected,
+                onColorComboSelected = viewModel::onColorComboSelected,
                 onDriveTokenChanged = viewModel::onDriveTokenChange,
                 onConnectDrive = viewModel::connectDrive,
                 onDisconnectDrive = viewModel::disconnectDrive,

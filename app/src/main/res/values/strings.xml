@@ -108,6 +108,19 @@
     <string name="settings_theme_system_description">Match your device theme.</string>
     <string name="settings_theme_light_description">Always use light.</string>
     <string name="settings_theme_dark_description">Always use dark.</string>
+    <string name="settings_color_combo_header">Background &amp; text colors</string>
+    <string name="settings_color_combo_description">Pick the background and text color combination used throughout the app.</string>
+    <string name="settings_color_combo_preview_hint">Preview</string>
+    <string name="color_combo_aurora">Aurora glow (current)</string>
+    <string name="color_combo_ocean_dusk">Ocean dusk</string>
+    <string name="color_combo_sunset_glow">Sunset glow</string>
+    <string name="color_combo_forest_canopy">Forest canopy</string>
+    <string name="color_combo_desert_dawn">Desert dawn</string>
+    <string name="color_combo_blossom_sky">Blossom sky</string>
+    <string name="color_combo_slate_morning">Slate morning</string>
+    <string name="color_combo_golden_hour">Golden hour</string>
+    <string name="color_combo_starry_night">Starry night</string>
+    <string name="color_combo_cyber_city">Cyber city</string>
 
     <!-- Account screen -->
     <string name="account_title">Account</string>

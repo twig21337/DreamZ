@@ -8,6 +8,7 @@ import com.twig.dreamzversion3.data.UserPreferencesRepository
 import com.twig.dreamzversion3.drive.DriveDocumentPreview
 import com.twig.dreamzversion3.drive.DriveSyncManager
 import com.twig.dreamzversion3.drive.DriveSyncResult
+import com.twig.dreamzversion3.ui.theme.ColorCombo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,13 +33,23 @@ class SettingsViewModel(
         )
 
     // uiState emits a SettingsUiState
+    private val colorComboState = preferences.colorComboFlow
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            ColorCombo.AURORA
+        )
+
     val uiState: StateFlow<SettingsUiState> = combine(
         themeModeState,
+        colorComboState,
         driveState
-    ) { themeMode, drive ->
+    ) { themeMode, colorCombo, drive ->
         SettingsUiState(
             themeMode = themeMode,
+            colorCombo = colorCombo,
             availableThemeModes = ThemeMode.values().toList(),
+            availableColorCombos = ColorCombo.values().toList(),
             driveTokenInput = drive.tokenInput,
             isDriveLinked = !drive.storedToken.isNullOrBlank(),
             isSyncing = drive.isSyncing,
@@ -67,6 +78,12 @@ class SettingsViewModel(
     fun onThemeSelected(mode: ThemeMode) {
         viewModelScope.launch {
             preferences.setThemeMode(mode)
+        }
+    }
+
+    fun onColorComboSelected(colorCombo: ColorCombo) {
+        viewModelScope.launch {
+            preferences.setColorCombo(colorCombo)
         }
     }
 
@@ -175,7 +192,9 @@ class SettingsViewModel(
 
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val colorCombo: ColorCombo = ColorCombo.AURORA,
     val availableThemeModes: List<ThemeMode> = ThemeMode.values().toList(),
+    val availableColorCombos: List<ColorCombo> = ColorCombo.values().toList(),
     val driveTokenInput: String = "",
     val isDriveLinked: Boolean = false,
     val isSyncing: Boolean = false,

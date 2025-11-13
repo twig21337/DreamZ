@@ -34,6 +34,7 @@ import com.twig.dreamzversion3.data.userPreferencesDataStore
 import com.twig.dreamzversion3.navigation.DreamZDestination
 import com.twig.dreamzversion3.navigation.DreamZDestinations
 import com.twig.dreamzversion3.navigation.DreamZNavHost
+import com.twig.dreamzversion3.ui.theme.ColorCombo
 import com.twig.dreamzversion3.ui.theme.DreamZVersion3Theme
 import com.twig.dreamzversion3.ui.theme.AuroraGradient
 import com.twig.dreamzversion3.ui.theme.MidnightGradient
@@ -47,6 +48,7 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
         UserPreferencesRepository(context.userPreferencesDataStore)
     }
     val themeMode by preferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+    val colorCombo by preferences.colorComboFlow.collectAsState(initial = ColorCombo.AURORA)
     val onboardingCompleted by preferences.onboardingCompletedFlow.collectAsState(initial = false)
     val systemDark = isSystemInDarkTheme()
     val useDarkTheme = when (themeMode) {
@@ -57,10 +59,14 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
     val onboardingViewModel: OnboardingViewModel = viewModel(
         factory = OnboardingViewModel.factory(preferences)
     )
-    val backgroundBrush = if (useDarkTheme) MidnightGradient else AuroraGradient
+    val backgroundBrush = when {
+        colorCombo == ColorCombo.AURORA && useDarkTheme -> MidnightGradient
+        colorCombo == ColorCombo.AURORA && !useDarkTheme -> AuroraGradient
+        else -> colorCombo.backgroundBrush(useDarkTheme)
+    }
 
     CompositionLocalProvider(LocalUserPreferencesRepository provides preferences) {
-        DreamZVersion3Theme(darkTheme = useDarkTheme) {
+        DreamZVersion3Theme(darkTheme = useDarkTheme, colorCombo = colorCombo) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

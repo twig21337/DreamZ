@@ -2,10 +2,12 @@ package com.twig.dreamzversion3.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -23,12 +25,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.twig.dreamzversion3.data.ThemeMode
+import com.twig.dreamzversion3.ui.theme.ColorCombo
 import com.twig.dreamzversion3.R
 
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
     onThemeSelected: (ThemeMode) -> Unit,
+    onColorComboSelected: (ColorCombo) -> Unit,
     // drive callbacks kept but unused so your nav call still compiles
     onDriveTokenChanged: (String) -> Unit = {},
     onConnectDrive: () -> Unit = {},
@@ -68,6 +72,24 @@ fun SettingsScreen(
                         mode = mode,
                         selected = mode == uiState.themeMode,
                         onSelected = { onThemeSelected(mode) }
+                    )
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(id = R.string.settings_color_combo_header),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = stringResource(id = R.string.settings_color_combo_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                uiState.availableColorCombos.forEach { combo ->
+                    ColorComboRow(
+                        combo = combo,
+                        selected = combo == uiState.colorCombo,
+                        onSelected = { onColorComboSelected(combo) }
                     )
                 }
             }
@@ -140,6 +162,68 @@ private fun ThemeModeRow(
             )
             Text(
                 text = stringResource(id = descriptionRes),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColorComboRow(
+    combo: ColorCombo,
+    selected: Boolean,
+    onSelected: () -> Unit
+) {
+    val backgroundColor: Color = if (selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        Color.Transparent
+    }
+
+    val previewBackground = combo.lightBackground
+    val previewForeground = combo.lightForeground
+
+    androidx.compose.foundation.layout.Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = backgroundColor, shape = RoundedCornerShape(12.dp))
+            .selectable(
+                selected = selected,
+                onClick = onSelected,
+                role = Role.RadioButton
+            )
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = null
+        )
+        Box(
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .size(48.dp)
+                .background(color = previewBackground, shape = RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Aa",
+                style = MaterialTheme.typography.titleSmall,
+                color = previewForeground
+            )
+        }
+        Column(
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(id = combo.displayNameRes),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = stringResource(id = R.string.settings_color_combo_preview_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
