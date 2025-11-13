@@ -7,6 +7,7 @@
     <!-- Tabs / nav -->
     <string name="dreams_tab_label">Dreams</string>
     <string name="dream_signs_tab_label">Dream signs</string>
+    <string name="insights_tab_label">Insights</string>
     <string name="settings_tab_label">Settings</string>
     <string name="account_tab_label">Account</string>
 
@@ -46,6 +47,28 @@
 
     <!-- Dream signs screen -->
     <string name="dream_signs_title">Dream signs</string>
+
+    <!-- Insights dashboard -->
+    <string name="insights_title">Insights dashboard</string>
+    <string name="insights_empty_title">No insights yet</string>
+    <string name="insights_empty_body">Add a few dreams to unlock your personal insights.</string>
+    <string name="insights_weekly_summary_title">Weekly dream summary</string>
+    <string name="insights_weekly_summary_empty">No dreams logged in the last week.</string>
+    <string name="insights_lucidity_frequency_title">Lucidity frequency</string>
+    <string name="insights_lucidity_frequency_empty">Start logging lucid dreams to see weekly trends.</string>
+    <string name="insights_emotion_trend_title">Emotion trend</string>
+    <string name="insights_emotion_trend_empty">We\'ll chart your emotions once you add dreams.</string>
+    <string name="insights_top_dream_signs_title">Top dream signs</string>
+    <string name="insights_top_dream_signs_empty">We haven\'t found any standout dream signs yet.</string>
+    <string name="insights_heatmap_title">Dream sign heatmap</string>
+    <string name="insights_heatmap_empty">Log more dreams to reveal when your dream signs appear.</string>
+    <string name="insights_percentage_value">%1$d%%</string>
+    <string name="insights_ranked_sign_label">%1$d. %2$s</string>
+    <string name="insights_dream_sign_count">%1$d sightings</string>
+    <string name="insights_segment_early_morning">Late night</string>
+    <string name="insights_segment_morning">Morning</string>
+    <string name="insights_segment_afternoon">Afternoon</string>
+    <string name="insights_segment_night">Evening</string>
 
     <!-- Blacklist section -->
     <string name="dream_signs_blacklist_section_title">Ignored words</string>

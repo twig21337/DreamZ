@@ -3,6 +3,7 @@ package com.twig.dreamzversion3.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.AutoGraph
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -17,6 +18,12 @@ sealed class DreamZDestination(
         route = "dreams",
         icon = Icons.Outlined.AutoAwesome,
         labelResId = R.string.dreams_tab_label
+    )
+
+    data object Insights : DreamZDestination(
+        route = "insights",
+        icon = Icons.Outlined.AutoGraph,
+        labelResId = R.string.insights_tab_label
     )
 
     data object DreamSigns : DreamZDestination(
@@ -40,6 +47,7 @@ sealed class DreamZDestination(
 
 val DreamZDestinations = listOf(
     DreamZDestination.Dreams,
+    DreamZDestination.Insights,
     DreamZDestination.DreamSigns,
     DreamZDestination.Settings,
     DreamZDestination.Account

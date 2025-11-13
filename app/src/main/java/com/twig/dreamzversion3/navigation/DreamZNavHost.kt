@@ -20,6 +20,8 @@ import com.twig.dreamzversion3.dreamsigns.DreamSignIgnoredWordsRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignsDestinations
 import com.twig.dreamzversion3.dreamsigns.DreamSignsRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignsViewModel
+import com.twig.dreamzversion3.insights.InsightsRoute
+import com.twig.dreamzversion3.insights.InsightsViewModel
 import com.twig.dreamzversion3.drive.DriveSyncManager
 import com.twig.dreamzversion3.drive.DriveSyncStateRepository
 import com.twig.dreamzversion3.settings.SettingsScreen
@@ -135,6 +137,23 @@ fun DreamZNavHost(
                     viewModel = dreamsViewModel
                 )
             }
+        }
+        composable(DreamZDestination.Insights.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(DreamZDestination.Insights.route)
+            }
+            val preferences = LocalUserPreferencesRepository.current
+            val viewModelFactory = remember(preferences, dreamRepository) {
+                InsightsViewModel.factory(
+                    repository = dreamRepository,
+                    preferences = preferences
+                )
+            }
+            val viewModel: InsightsViewModel = viewModel(
+                parentEntry,
+                factory = viewModelFactory
+            )
+            InsightsRoute(viewModel = viewModel)
         }
         navigation(
             route = DreamZDestination.DreamSigns.route,
