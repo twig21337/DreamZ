@@ -33,7 +33,9 @@ class DreamSignsViewModel(
                 val filtered = promoted.filterNot { it in blacklist }.toSet()
                 if (filtered.size != promoted.size) {
                     val removed = promoted - filtered
-                    removed.forEach { preferences.removePromotedDreamSign(it) }
+                    for (key in removed) {
+                        preferences.removePromotedDreamSign(key)
+                    }
                 }
             }
         }
