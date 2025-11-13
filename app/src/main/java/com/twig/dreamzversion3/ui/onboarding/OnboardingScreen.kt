@@ -126,6 +126,7 @@ fun OnboardingRoute(
     )
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun OnboardingScreen(
     uiState: OnboardingUiState,
