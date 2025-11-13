@@ -204,26 +204,44 @@ enum class DreamListMode {
     Card
 }
 
-enum class DreamSortOption(@StringRes val labelRes: Int) {
-    DateNewest(R.string.dream_sort_recent),
-    DateOldest(R.string.dream_sort_oldest),
-    Mood(R.string.dream_sort_mood),
-    Tag(R.string.dream_sort_tag),
-    Intensity(R.string.dream_sort_intensity),
-    Emotion(R.string.dream_sort_emotion),
-    Lucid(R.string.dream_sort_lucid),
-    Recurring(R.string.dream_sort_recurring);
-
-    val comparator: Comparator<Dream> = when (this) {
-        DateNewest -> compareByDescending<Dream> { it.createdAt }
-        DateOldest -> compareBy { it.createdAt }
-        Mood -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.mood.ifBlank { "~" } }
-        Tag -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.tags.firstOrNull()?.ifBlank { "~" } ?: "~" }
-        Intensity -> compareByDescending<Dream> { it.intensity }
-        Emotion -> compareByDescending<Dream> { it.emotion }
-        Lucid -> compareBy<Dream> { if (it.isLucid) 0 else 1 }.thenByDescending { it.createdAt }
-        Recurring -> compareBy<Dream> { if (it.isRecurring) 0 else 1 }.thenByDescending { it.createdAt }
-    }
+enum class DreamSortOption(
+    @StringRes val labelRes: Int,
+    val comparator: Comparator<Dream>
+) {
+    DateNewest(
+        R.string.dream_sort_recent,
+        compareByDescending<Dream> { it.createdAt }
+    ),
+    DateOldest(
+        R.string.dream_sort_oldest,
+        compareBy { it.createdAt }
+    ),
+    Mood(
+        R.string.dream_sort_mood,
+        compareBy(String.CASE_INSENSITIVE_ORDER) { it.mood.ifBlank { "~" } }
+    ),
+    Tag(
+        R.string.dream_sort_tag,
+        compareBy(String.CASE_INSENSITIVE_ORDER) {
+            it.tags.firstOrNull()?.ifBlank { "~" } ?: "~"
+        }
+    ),
+    Intensity(
+        R.string.dream_sort_intensity,
+        compareByDescending<Dream> { it.intensity }
+    ),
+    Emotion(
+        R.string.dream_sort_emotion,
+        compareByDescending<Dream> { it.emotion }
+    ),
+    Lucid(
+        R.string.dream_sort_lucid,
+        compareBy<Dream> { if (it.isLucid) 0 else 1 }.thenByDescending { it.createdAt }
+    ),
+    Recurring(
+        R.string.dream_sort_recurring,
+        compareBy<Dream> { if (it.isRecurring) 0 else 1 }.thenByDescending { it.createdAt }
+    )
 }
 
 sealed class DreamEditorEvent {
