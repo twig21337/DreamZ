@@ -79,6 +79,8 @@
     <string name="dream_signs_promoted_section_title">Promoted signs</string>
     <string name="dream_signs_promoted_empty">No promoted signs.</string>
     <string name="dream_signs_promoted_chip">Promoted</string>
+    <string name="dream_signs_promoted_view_cards">Card view</string>
+    <string name="dream_signs_promoted_view_list">List view</string>
     <string name="dream_signs_remove_promoted_cd">Remove promoted dream sign %1$s</string>
     <string name="dream_signs_promote_button">Promote</string>
 
