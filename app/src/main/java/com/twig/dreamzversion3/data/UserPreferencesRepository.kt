@@ -20,6 +20,7 @@ private val KEY_DRAFT_TAGS = stringPreferencesKey("draft_tags")
 private val KEY_DRAFT_INTENSITY = intPreferencesKey("draft_intensity")
 private val KEY_DRAFT_EMOTION = intPreferencesKey("draft_emotion")
 private val KEY_DRAFT_LUCIDITY = intPreferencesKey("draft_lucidity")
+private val KEY_DRAFT_RECURRING = androidx.datastore.preferences.core.booleanPreferencesKey("draft_recurring")
 private val KEY_DARK_THEME = androidx.datastore.preferences.core.booleanPreferencesKey("dark_theme")
 private val KEY_LAYOUT_MODE = stringPreferencesKey("layout_mode")
 private val KEY_BACKUP_FREQUENCY = stringPreferencesKey("backup_frequency")
@@ -45,7 +46,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             tags = prefs[KEY_DRAFT_TAGS]?.split("|")?.filter { it.isNotEmpty() } ?: emptyList(),
             intensityRating = prefs[KEY_DRAFT_INTENSITY] ?: 0,
             emotionRating = prefs[KEY_DRAFT_EMOTION] ?: 0,
-            lucidityRating = prefs[KEY_DRAFT_LUCIDITY] ?: 0
+            lucidityRating = prefs[KEY_DRAFT_LUCIDITY] ?: 0,
+            recurring = prefs[KEY_DRAFT_RECURRING] ?: false
         )
     }
 
@@ -97,6 +99,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             prefs[KEY_DRAFT_INTENSITY] = draft.intensityRating
             prefs[KEY_DRAFT_EMOTION] = draft.emotionRating
             prefs[KEY_DRAFT_LUCIDITY] = draft.lucidityRating
+            prefs[KEY_DRAFT_RECURRING] = draft.recurring
         }
     }
 
@@ -110,6 +113,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             prefs.remove(KEY_DRAFT_INTENSITY)
             prefs.remove(KEY_DRAFT_EMOTION)
             prefs.remove(KEY_DRAFT_LUCIDITY)
+            prefs.remove(KEY_DRAFT_RECURRING)
         }
     }
 

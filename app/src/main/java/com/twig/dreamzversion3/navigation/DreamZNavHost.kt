@@ -104,6 +104,11 @@ fun DreamZNavHost(
                             message
                         )
                     },
+                    onNavigateToDream = { dreamId ->
+                        navController.navigate(DreamsDestinations.editRoute(dreamId)) {
+                            popUpTo(DreamsDestinations.LIST_ROUTE) { inclusive = false }
+                        }
+                    },
                     dreamId = null,
                     viewModel = dreamsViewModel
                 )
@@ -132,6 +137,11 @@ fun DreamZNavHost(
                             DreamsDestinations.SNACKBAR_RESULT_KEY,
                             message
                         )
+                    },
+                    onNavigateToDream = { targetDreamId ->
+                        navController.navigate(DreamsDestinations.editRoute(targetDreamId)) {
+                            popUpTo(DreamsDestinations.LIST_ROUTE) { inclusive = false }
+                        }
                     },
                     dreamId = dreamId,
                     viewModel = dreamsViewModel

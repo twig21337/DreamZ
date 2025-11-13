@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.twig.dreamzversion3.R
+import com.twig.dreamzversion3.data.DreamDraft
 import com.twig.dreamzversion3.data.DreamLayoutMode
 import com.twig.dreamzversion3.data.UserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepository
@@ -19,15 +20,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class DreamsViewModel(
     private val repository: DreamRepository,
     private val preferences: UserPreferencesRepository
 ) : ViewModel() {
 
+    private val latestDraft = MutableStateFlow(DreamDraft())
+    private val highlightTerms = MutableStateFlow<Set<String>>(emptySet())
     private val _dreamEntryState = MutableStateFlow(DreamEntryUiState())
     private val dreamEntryState: StateFlow<DreamEntryUiState> = _dreamEntryState.asStateFlow()
     private val _listMode = MutableStateFlow(DreamListMode.Card)
@@ -64,6 +71,45 @@ class DreamsViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            combine(
+                preferences.promotedDreamSignsFlow,
+                preferences.dreamSignBlacklistFlow
+            ) { promoted, blacklist ->
+                promoted.filterNot { it in blacklist }.toSet()
+            }.collect { terms ->
+                highlightTerms.value = terms
+                _dreamEntryState.update { state ->
+                    state.copy(highlightedDreamSigns = terms)
+                }
+            }
+        }
+        viewModelScope.launch {
+            preferences.draftFlow.collect { draft ->
+                latestDraft.value = draft
+                val current = _dreamEntryState.value
+                if (!current.isEditing) {
+                    _dreamEntryState.value = draft.toEntryState(
+                        highlights = highlightTerms.value,
+                        keepExistingInput = current.tagInput
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            _dreamEntryState
+                .debounce(800)
+                .map { it.isEditing to it.toDraft() }
+                .distinctUntilChanged()
+                .collect { (isEditing, draft) ->
+                    if (isEditing) return@collect
+                    if (draft.isBlank()) {
+                        preferences.clearDraft()
+                    } else {
+                        preferences.persistDraft(draft)
+                    }
+                }
+        }
     }
 
     fun onTitleChange(title: String) {
@@ -78,8 +124,32 @@ class DreamsViewModel(
         _dreamEntryState.update { it.copy(mood = mood) }
     }
 
-    fun onTagsInputChange(tags: String) {
-        _dreamEntryState.update { it.copy(tagsInput = tags) }
+    fun onTagInputChanged(input: String) {
+        val sanitized = input.replace('\n', ' ')
+        val parts = sanitized.split(',', ';')
+        val committed = if (parts.size > 1) parts.dropLast(1) else emptyList()
+        val remainder = parts.lastOrNull() ?: sanitized
+        _dreamEntryState.update { state ->
+            var updated = state
+            committed.map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .forEach { tag -> updated = updated.addTag(tag) }
+            updated.copy(tagInput = remainder.trimStart())
+        }
+    }
+
+    fun commitTagInput() {
+        _dreamEntryState.update { state ->
+            val input = state.tagInput.trim()
+            if (input.isEmpty()) return@update state.copy(tagInput = "")
+            state.addTag(input).copy(tagInput = "")
+        }
+    }
+
+    fun removeTag(tag: String) {
+        _dreamEntryState.update { state ->
+            state.copy(tags = state.tags.filterNot { it.equals(tag, ignoreCase = true) })
+        }
     }
 
     fun onLucidChange(isLucid: Boolean) {
@@ -99,6 +169,7 @@ class DreamsViewModel(
     }
 
     fun saveDream(): Boolean {
+        commitTagInput()
         val entry = dreamEntryState.value
         if (entry.title.isBlank() && entry.description.isBlank()) {
             return false
@@ -129,6 +200,7 @@ class DreamsViewModel(
             _events.emit(DreamEditorEvent.DreamSaved(dream.title))
         }
         resetEntry()
+        viewModelScope.launch { preferences.clearDraft() }
         return true
     }
 
@@ -139,11 +211,16 @@ class DreamsViewModel(
             _events.emit(DreamEditorEvent.DreamDeleted)
         }
         resetEntry()
+        viewModelScope.launch { preferences.clearDraft() }
         return true
     }
 
     fun resetEntry() {
-        _dreamEntryState.value = DreamEntryUiState()
+        _dreamEntryState.value = DreamEntryUiState(highlightedDreamSigns = highlightTerms.value)
+    }
+
+    fun startNewEntry() {
+        _dreamEntryState.value = latestDraft.value.toEntryState(highlights = highlightTerms.value)
     }
 
     fun startEditing(dreamId: String) {
@@ -160,10 +237,18 @@ class DreamsViewModel(
             intensity = dream.intensity,
             emotion = dream.emotion,
             isRecurring = dream.isRecurring,
-            tagsInput = dream.tags.joinToString(", "),
+            tags = dream.tags,
             createdAt = dream.createdAt,
-            updatedAt = dream.updatedAt
+            updatedAt = dream.updatedAt,
+            highlightedDreamSigns = highlightTerms.value
         )
+    }
+
+    fun cancelEditing() {
+        if (!dreamEntryState.value.isEditing) {
+            viewModelScope.launch { preferences.clearDraft() }
+        }
+        resetEntry()
     }
 
     fun toggleListMode() {
@@ -217,15 +302,54 @@ data class DreamEntryUiState(
     val intensity: Float = 5f,
     val emotion: Float = 5f,
     val isRecurring: Boolean = false,
-    val tagsInput: String = "",
+    val tags: List<String> = emptyList(),
+    val tagInput: String = "",
     val createdAt: Long? = null,
-    val updatedAt: Long? = null
+    val updatedAt: Long? = null,
+    val highlightedDreamSigns: Set<String> = emptySet()
 ) {
     val isEditing: Boolean = dreamId != null
-    val tags: List<String>
-        get() = tagsInput.split(",")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+}
+
+private fun DreamEntryUiState.addTag(tag: String): DreamEntryUiState {
+    val normalized = tag.trim()
+    if (normalized.isEmpty()) return this
+    if (tags.any { it.equals(normalized, ignoreCase = true) }) return this
+    return copy(tags = tags + normalized)
+}
+
+private fun DreamEntryUiState.toDraft(): DreamDraft = DreamDraft(
+    title = title,
+    body = description,
+    mood = mood,
+    lucid = isLucid,
+    tags = tags,
+    intensityRating = intensity.roundToInt().coerceIn(0, 10),
+    emotionRating = emotion.roundToInt().coerceIn(0, 10),
+    lucidityRating = if (isLucid) 10 else 0,
+    recurring = isRecurring
+)
+
+private fun DreamDraft.toEntryState(
+    highlights: Set<String>,
+    keepExistingInput: String = ""
+): DreamEntryUiState {
+    val isDefaultDraft = title.isBlank() && body.isBlank() && mood.isBlank() && tags.isEmpty() && !lucid && intensityRating == 0 && emotionRating == 0 && !recurring
+    if (isDefaultDraft) {
+        return DreamEntryUiState(highlightedDreamSigns = highlights, tagInput = keepExistingInput)
+    }
+    return DreamEntryUiState(
+        title = title,
+        description = body,
+        mood = mood,
+        isLucid = lucid,
+        intensity = intensityRating.coerceIn(0, 10).toFloat(),
+        emotion = emotionRating.coerceIn(0, 10).toFloat(),
+        isRecurring = recurring,
+        tags = tags,
+        tagInput = keepExistingInput,
+        highlightedDreamSigns = highlights
+    )
 }
 
 enum class DreamListMode {

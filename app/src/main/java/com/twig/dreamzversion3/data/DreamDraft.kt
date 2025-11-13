@@ -8,7 +8,8 @@ data class DreamDraft(
     val tags: List<String> = emptyList(),
     val intensityRating: Int = 0,
     val emotionRating: Int = 0,
-    val lucidityRating: Int = 0
+    val lucidityRating: Int = 0,
+    val recurring: Boolean = false
 ) {
     fun isBlank(): Boolean = title.isBlank() && body.isBlank()
 

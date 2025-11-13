@@ -36,7 +36,9 @@
     <string name="dream_description_label">Dream description</string>
     <string name="dream_description_support">Describe what happened in your dream.</string>
     <string name="dream_tags_label">Tags</string>
-    <string name="dream_tags_support">Comma-separated tags, e.g. "flying, school, ocean".</string>
+    <string name="dream_tags_support">Type a tag and press enter or add a comma to save it.</string>
+    <string name="dream_tags_placeholder">Add tag</string>
+    <string name="dream_tag_remove">Remove tag %1$s</string>
     <string name="dream_mood_label">Mood</string>
     <string name="save_dream_cta">Save dream</string>
     <string name="cancel_label">Cancel</string>
