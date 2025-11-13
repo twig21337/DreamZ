@@ -2,46 +2,103 @@ package com.twig.dreamzversion3.signs
 
 data class Dreamsign(val text: String, val count: Int)
 
-private val stop = setOf(
-    "the","a","an","and","or","but","if","then","than","to","of","in","on","at","for","from",
-    "with","by","as","was","were","is","are","be","been","being","i","me","my","we","our","you",
-    "your","he","she","it","they","them","this","that","there","here","up","down","left","right",
-    "over","under","into","out","so","just","really","very","like"
+private val tokenRegex = Regex("[A-Za-z][A-Za-z']+")
+
+private val baseStopwords = setOf(
+    "the", "and", "but", "or", "a", "an", "to", "of", "for", "in", "on", "at", "is", "am", "are",
+    "was", "were", "be", "been", "being", "i", "im", "ive", "you", "your", "yours", "me", "my", "we",
+    "our", "they", "them", "their", "dream", "dreams", "test", "tests", "testing", "today", "tonight",
+    "yesterday", "thing", "things", "someone", "something", "everything"
 )
 
-private fun normalize(text: String): List<String> =
-    text.lowercase()
-        .replace(Regex("[^a-z0-9\\s]"), " ")
-        .split(Regex("\\s+"))
-        .filter { it.isNotBlank() }
-
-private fun lemma(token: String): String {
-    if (token.length > 5 && token.endsWith("ing")) return token.removeSuffix("ing")
-    if (token.length > 4 && token.endsWith("ed"))  return token.removeSuffix("ed")
-    if (token.length > 3 && token.endsWith("s"))   return token.removeSuffix("s")
-    return token
+internal fun buildDreamsignStopwords(extra: Set<String> = emptySet()): Set<String> {
+    if (extra.isEmpty()) return baseStopwords
+    return baseStopwords + extra.map { it.lowercase() }
 }
 
-/** Returns top-K recurring single words + simple bigrams. Fully offline. */
-fun extractDreamsigns(allTexts: List<String>, topK: Int = 20): List<Dreamsign> {
-    val counts = mutableMapOf<String, Int>()
+private fun normalizeText(text: String): String = text
+    .lowercase()
+    .replace('\r', ' ')
+    .replace('\n', ' ')
+    .replace('\t', ' ')
+    .replace("’", "'")
+    .replace("‘", "'")
+    .replace("“", "\"")
+    .replace("”", "\"")
 
-    for (t in allTexts) {
-        val toks = normalize(t).map(::lemma).filter { it !in stop }
-        // unigrams
-        for (w in toks) counts[w] = (counts[w] ?: 0) + 1
-        // simple bigrams (optional, helps capture “school hallway”, “black cat”)
-        for (i in 0 until toks.size - 1) {
-            val a = toks[i]; val b = toks[i + 1]
-            if (a !in stop && b !in stop) {
-                val bigram = "$a $b"
-                counts[bigram] = (counts[bigram] ?: 0) + 1
-            }
+internal fun tokenizeDreamsignWords(
+    text: String,
+    stopwords: Set<String> = baseStopwords
+): List<String> {
+    if (text.isBlank()) return emptyList()
+
+    val normalizedText = normalizeText(text)
+    val tokens = mutableListOf<String>()
+
+    tokenRegex.findAll(normalizedText).forEach { matchResult ->
+        var token = matchResult.value
+        if (token.endsWith("'s")) {
+            token = token.dropLast(2)
+        }
+        if (token.length < 3) return@forEach
+        if (token in stopwords) return@forEach
+        tokens += token
+    }
+
+    return tokens
+}
+
+/**
+ * Returns the top-K recurring dream sign candidates extracted from dream bodies.
+ *
+ * Tokens are normalized, filtered, and counted according to the dream sign specification.
+ */
+fun extractDreamsigns(
+    allTexts: List<String>,
+    topK: Int = 20,
+    minGlobalCount: Int = 3,
+    minPerDreamCount: Int = 2,
+    extraStopwords: Set<String> = emptySet()
+): List<Dreamsign> {
+    if (allTexts.isEmpty()) return emptyList()
+
+    val stopwords = buildDreamsignStopwords(extraStopwords)
+
+    val globalWordFrequency = mutableMapOf<String, Int>()
+    val perDreamWordFrequency = mutableListOf<Map<String, Int>>()
+    val bigramFrequency = mutableMapOf<String, Int>()
+
+    for (text in allTexts) {
+        val tokens = tokenizeDreamsignWords(text, stopwords)
+        if (tokens.isEmpty()) {
+            perDreamWordFrequency += emptyMap()
+            continue
+        }
+
+        val perDreamCounts = mutableMapOf<String, Int>()
+        tokens.forEach { token ->
+            val updated = (perDreamCounts[token] ?: 0) + 1
+            perDreamCounts[token] = updated
+            globalWordFrequency[token] = (globalWordFrequency[token] ?: 0) + 1
+        }
+        perDreamWordFrequency += perDreamCounts
+
+        for (i in 0 until tokens.size - 1) {
+            val bigram = tokens[i] + " " + tokens[i + 1]
+            bigramFrequency[bigram] = (bigramFrequency[bigram] ?: 0) + 1
         }
     }
 
-    return counts.entries
-        .sortedByDescending { it.value }
+    val qualifyingWords = globalWordFrequency.filter { (word, count) ->
+        val meetsGlobal = count >= minGlobalCount
+        val meetsPerDream = perDreamWordFrequency.any { (it[word] ?: 0) >= minPerDreamCount }
+        (meetsGlobal || meetsPerDream) && word !in stopwords
+    }
+
+    val qualifyingBigrams = bigramFrequency.filter { (_, count) -> count >= 2 }
+
+    return (qualifyingWords.entries + qualifyingBigrams.entries)
+        .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
         .take(topK)
         .map { Dreamsign(it.key, it.value) }
 }

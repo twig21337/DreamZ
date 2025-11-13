@@ -1,7 +1,9 @@
 package com.twig.dreamzversion3.dreamsigns
 
 import com.twig.dreamzversion3.model.dream.Dream
+import com.twig.dreamzversion3.signs.buildDreamsignStopwords
 import com.twig.dreamzversion3.signs.extractDreamsigns
+import com.twig.dreamzversion3.signs.tokenizeDreamsignWords
 
 private val dreamSignStopwords = setOf(
     "dream", "dreams", "test", "tests", "testing", "today", "tonight", "yesterday",
@@ -29,17 +31,22 @@ internal fun buildDreamSignCandidates(
     if (dreams.isEmpty()) return emptyList()
 
     val candidateMap = mutableMapOf<String, MutableDreamSignCandidate>()
-    val combinedStopwords = dreamSignStopwords + blacklist
-    val contexts = dreams.map { it.toContext(combinedStopwords) }
+    val extraStopwords = dreamSignStopwords + blacklist
+    val stopwords = buildDreamsignStopwords(extraStopwords)
+    val contexts = dreams.map { it.toContext(stopwords) }
 
     val descriptionTexts = dreams.mapNotNull { dream ->
         dream.description.takeIf { it.isNotBlank() }
     }
     if (descriptionTexts.isNotEmpty()) {
-        val extracted = extractDreamsigns(descriptionTexts, topK = maxItems * 2)
+        val extracted = extractDreamsigns(
+            descriptionTexts,
+            topK = maxItems * 2,
+            extraStopwords = extraStopwords
+        )
         extracted.forEach { sign ->
             val key = sign.text.lowercase()
-            if (!key.isValidCandidate(combinedStopwords, blacklist)) return@forEach
+            if (!key.isValidCandidate(stopwords, blacklist)) return@forEach
             val display = sign.text
                 .split(" ")
                 .filter { it.isNotBlank() }
@@ -72,7 +79,7 @@ internal fun buildDreamSignCandidates(
             val tag = rawTag.trim()
             if (tag.isNotEmpty()) {
                 val key = tag.lowercase()
-                if (!key.isValidCandidate(combinedStopwords, blacklist)) return@forEach
+                if (!key.isValidCandidate(stopwords, blacklist)) return@forEach
                 val candidate = candidateMap.getOrPut(key) {
                     MutableDreamSignCandidate(
                         key = key,
@@ -105,24 +112,13 @@ internal fun buildDreamSignCandidates(
 
 private fun Dream.toContext(stopwords: Set<String>): DreamContext {
     if (description.isBlank()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
-    val tokens = normalize(description)
-    val filtered = tokens.filterNot { it in stopwords }
-    if (filtered.isEmpty()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
+    val tokens = tokenizeDreamsignWords(description, stopwords)
+    if (tokens.isEmpty()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
     val features = mutableSetOf<String>()
-    filtered.forEach { features += it }
-    filtered.zipWithNext { a, b ->
-        if (a !in stopwords && b !in stopwords) {
-            features += "$a $b"
-        }
-    }
+    tokens.forEach { token -> features += token }
+    tokens.zipWithNext { a, b -> features += "$a $b" }
     return DreamContext(title.ifBlank { "Untitled Dream" }, features)
 }
-
-private fun normalize(text: String): List<String> =
-    text.lowercase()
-        .replace(Regex("[^a-z0-9\\s]"), " ")
-        .split(Regex("\\s+"))
-        .filter { it.isNotBlank() }
 
 private fun String.isValidCandidate(stopwords: Set<String>, blacklist: Set<String>): Boolean {
     val tokens = split(" ").filter { it.isNotBlank() }
