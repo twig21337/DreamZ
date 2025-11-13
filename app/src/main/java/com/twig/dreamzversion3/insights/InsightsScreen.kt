@@ -241,6 +241,8 @@ private fun EmotionTrendGraph(entries: List<WeeklyEmotion>) {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val pathColor = MaterialTheme.colorScheme.secondary
+        val baselineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -249,8 +251,6 @@ private fun EmotionTrendGraph(entries: List<WeeklyEmotion>) {
             val maxEmotion = 10f
             val minEmotion = 0f
             val xSpacing = if (entries.size > 1) size.width / (entries.size - 1) else 0f
-            val pathColor = MaterialTheme.colorScheme.secondary
-            val baselineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             drawLine(
                 color = baselineColor,
                 start = Offset(x = 0f, y = size.height),
