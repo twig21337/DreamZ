@@ -12,6 +12,7 @@ import java.util.TimeZone
 
 class DriveSyncManager(
     private val repository: DreamRepository,
+    private val syncStateRepository: DriveSyncStateRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
@@ -21,29 +22,53 @@ class DriveSyncManager(
      */
     suspend fun sync(token: String): DriveSyncResult = withContext(ioDispatcher) {
         val dreams = repository.getDreams()
+        val dreamIds = dreams.map { it.id }.toSet()
+        val existingStates = syncStateRepository.getStates()
+        syncStateRepository.removeAllExcept(dreamIds)
+        val activeStates = existingStates.filterKeys { it in dreamIds }
+
         if (dreams.isEmpty()) {
             return@withContext DriveSyncResult.Empty
+        }
+
+        val dreamsToSync = dreams.filter { dream ->
+            val lastEditedAt = dream.updatedAt ?: dream.createdAt
+            val state = activeStates[dream.id]
+            state == null || lastEditedAt > state.lastSyncedAt
+        }
+
+        if (dreamsToSync.isEmpty()) {
+            return@withContext DriveSyncResult.Success(0)
         }
 
         // make sure the folder exists
         val folderId = ensureDreamZFolder(token)
 
-        dreams.forEach { dream ->
+        dreamsToSync.forEach { dream ->
             val datePart = formatDate(dream.createdAt)
             val titlePart = if (dream.title.isBlank()) "Untitled Dream" else dream.title
             val body = buildDocBody(dream)
 
             // this creates or updates the Google Doc
-            upsertDreamAsGoogleDoc(
+            val docId = upsertDreamAsGoogleDoc(
                 token = token,
                 folderId = folderId,
                 date = datePart,
                 title = titlePart,
                 body = body
             )
+
+            val lastEditedAt = dream.updatedAt ?: dream.createdAt
+            syncStateRepository.upsert(
+                DriveSyncState(
+                    dreamId = dream.id,
+                    driveFileId = docId,
+                    lastSyncedAt = lastEditedAt
+                )
+            )
         }
 
-        DriveSyncResult.Success(dreams.size)
+        DriveSyncResult.Success(dreamsToSync.size)
     }
 
     /**

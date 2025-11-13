@@ -41,6 +41,7 @@ import com.twig.dreamzversion3.common.findActivity
 import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepositories
 import com.twig.dreamzversion3.drive.DriveSyncManager
+import com.twig.dreamzversion3.drive.DriveSyncStateRepository
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +50,10 @@ fun AccountRoute() {
     val context = LocalContext.current
     val preferences = LocalUserPreferencesRepository.current
     val dreamRepository = remember(context) { DreamRepositories.persistent(context) }
-    val driveSyncManager = remember(dreamRepository) { DriveSyncManager(dreamRepository) }
+    val driveSyncStateRepository = remember(context) { DriveSyncStateRepository(context) }
+    val driveSyncManager = remember(dreamRepository, driveSyncStateRepository) {
+        DriveSyncManager(dreamRepository, driveSyncStateRepository)
+    }
     val viewModel: AccountViewModel = viewModel(
         factory = AccountViewModel.factory(preferences, driveSyncManager, context)
     )

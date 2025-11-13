@@ -21,6 +21,7 @@ import com.twig.dreamzversion3.dreamsigns.DreamSignsDestinations
 import com.twig.dreamzversion3.dreamsigns.DreamSignsRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignsViewModel
 import com.twig.dreamzversion3.drive.DriveSyncManager
+import com.twig.dreamzversion3.drive.DriveSyncStateRepository
 import com.twig.dreamzversion3.settings.SettingsScreen
 import com.twig.dreamzversion3.settings.SettingsViewModel
 import com.twig.dreamzversion3.ui.dreams.DreamEntryRoute
@@ -41,6 +42,7 @@ fun DreamZNavHost(
     val context = LocalContext.current
     val dreamRepository = remember(context) { DreamRepositories.persistent(context) }
     val preferences = LocalUserPreferencesRepository.current
+    val driveSyncStateRepository = remember(context) { DriveSyncStateRepository(context) }
     val dreamsViewModelFactory = remember(dreamRepository, preferences) {
         DreamsViewModel.factory(dreamRepository, preferences)
     }
@@ -183,7 +185,9 @@ fun DreamZNavHost(
         }
         composable(DreamZDestination.Settings.route) {
             val preferences = LocalUserPreferencesRepository.current
-            val driveSyncManager = remember(dreamRepository) { DriveSyncManager(dreamRepository) }
+            val driveSyncManager = remember(dreamRepository, driveSyncStateRepository) {
+                DriveSyncManager(dreamRepository, driveSyncStateRepository)
+            }
             val viewModel: SettingsViewModel = viewModel(
                 factory = SettingsViewModel.factory(
                     preferences = preferences,

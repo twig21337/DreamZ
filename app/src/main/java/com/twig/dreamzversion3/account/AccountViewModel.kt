@@ -101,7 +101,14 @@ class AccountViewModel(
                 preferences.persistDriveToken(token)
                 val message = when (result) {
                     is DriveSyncResult.Success ->
-                        appContext.getString(R.string.account_drive_sync_success, result.count)
+                        if (result.count > 0) {
+                            appContext.getString(
+                                R.string.account_drive_sync_success,
+                                result.count
+                            )
+                        } else {
+                            appContext.getString(R.string.account_drive_sync_empty)
+                        }
 
                     DriveSyncResult.Empty ->
                         appContext.getString(R.string.account_drive_sync_empty)

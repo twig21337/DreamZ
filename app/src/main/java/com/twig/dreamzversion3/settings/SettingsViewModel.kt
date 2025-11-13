@@ -115,7 +115,12 @@ class SettingsViewModel(
                 val result = driveSyncManager.sync(token)
                 preferences.persistDriveToken(token)
                 val message = when (result) {
-                    is DriveSyncResult.Success -> "Synced ${result.count} dreams"
+                    is DriveSyncResult.Success ->
+                        if (result.count > 0) {
+                            "Synced ${result.count} dreams"
+                        } else {
+                            "All dreams are already synced"
+                        }
                     DriveSyncResult.Empty -> "No dreams to sync"
                 }
                 driveState.update {
