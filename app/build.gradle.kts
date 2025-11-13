@@ -63,6 +63,7 @@ android {
         // you can bump to 17 later if your project uses it
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -118,4 +119,5 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.compose.material:material-icons-extended")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 }
