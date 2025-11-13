@@ -40,8 +40,9 @@ fun DreamZNavHost(
 ) {
     val context = LocalContext.current
     val dreamRepository = remember(context) { DreamRepositories.persistent(context) }
-    val dreamsViewModelFactory = remember(dreamRepository) {
-        DreamsViewModel.factory(dreamRepository)
+    val preferences = LocalUserPreferencesRepository.current
+    val dreamsViewModelFactory = remember(dreamRepository, preferences) {
+        DreamsViewModel.factory(dreamRepository, preferences)
     }
 
     NavHost(

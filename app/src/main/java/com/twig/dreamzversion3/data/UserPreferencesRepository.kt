@@ -25,6 +25,7 @@ private val KEY_BACKUP_FREQUENCY = stringPreferencesKey("backup_frequency")
 private val KEY_DRIVE_TOKEN = stringPreferencesKey("drive_token")
 private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
 private val KEY_DREAM_SIGN_BLACKLIST = stringPreferencesKey("dream_sign_blacklist")
+private val KEY_PROMOTED_DREAM_SIGNS = stringPreferencesKey("promoted_dream_signs")
 private val KEY_ONBOARDING_COMPLETE = androidx.datastore.preferences.core.booleanPreferencesKey("onboarding_complete")
 
 val Context.userPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(
@@ -167,6 +168,15 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             ?: emptySet()
     }
 
+    val promotedDreamSignsFlow: Flow<Set<String>> = dataStore.data.map { prefs ->
+        prefs[KEY_PROMOTED_DREAM_SIGNS]
+            ?.split("|")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.toSet()
+            ?: emptySet()
+    }
+
     suspend fun addDreamSignBlacklistTerm(term: String) {
         val normalized = term.trim().lowercase()
         if (normalized.isEmpty()) return
@@ -196,6 +206,39 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                 prefs.remove(KEY_DREAM_SIGN_BLACKLIST)
             } else {
                 prefs[KEY_DREAM_SIGN_BLACKLIST] = current.sorted().joinToString("|")
+            }
+        }
+    }
+
+    suspend fun addPromotedDreamSign(key: String) {
+        val normalized = key.trim()
+        if (normalized.isEmpty()) return
+        dataStore.edit { prefs ->
+            val current = prefs[KEY_PROMOTED_DREAM_SIGNS]
+                ?.split("|")
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() }
+                ?.toMutableSet()
+                ?: mutableSetOf()
+            current += normalized
+            prefs[KEY_PROMOTED_DREAM_SIGNS] = current.sorted().joinToString("|")
+        }
+    }
+
+    suspend fun removePromotedDreamSign(key: String) {
+        val normalized = key.trim()
+        dataStore.edit { prefs ->
+            val current = prefs[KEY_PROMOTED_DREAM_SIGNS]
+                ?.split("|")
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() }
+                ?.toMutableSet()
+                ?: mutableSetOf()
+            current -= normalized
+            if (current.isEmpty()) {
+                prefs.remove(KEY_PROMOTED_DREAM_SIGNS)
+            } else {
+                prefs[KEY_PROMOTED_DREAM_SIGNS] = current.sorted().joinToString("|")
             }
         }
     }

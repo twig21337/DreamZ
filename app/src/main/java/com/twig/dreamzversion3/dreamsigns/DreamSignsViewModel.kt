@@ -6,13 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.twig.dreamzversion3.data.dream.DreamRepositories
 import com.twig.dreamzversion3.data.dream.DreamRepository
 import com.twig.dreamzversion3.data.UserPreferencesRepository
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -22,10 +20,24 @@ class DreamSignsViewModel(
     private val preferences: UserPreferencesRepository
 ) : ViewModel() {
 
-    private val _promotedKeys = MutableStateFlow<Set<String>>(emptySet())
-    private val promotedKeys: StateFlow<Set<String>> = _promotedKeys.asStateFlow()
+    private val promotedKeys: StateFlow<Set<String>> = preferences.promotedDreamSignsFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
     private val blacklistState: StateFlow<Set<String>> = preferences.dreamSignBlacklistFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    init {
+        viewModelScope.launch {
+            combine(promotedKeys, blacklistState) { promoted, blacklist ->
+                promoted to blacklist
+            }.collect { (promoted, blacklist) ->
+                val filtered = promoted.filterNot { it in blacklist }.toSet()
+                if (filtered.size != promoted.size) {
+                    val removed = promoted - filtered
+                    removed.forEach { preferences.removePromotedDreamSign(it) }
+                }
+            }
+        }
+    }
 
     val uiState: StateFlow<DreamSignsUiState> = combine(
         repository.dreams,
@@ -33,9 +45,6 @@ class DreamSignsViewModel(
         blacklistState
     ) { dreams, promoted, blacklist ->
         val filteredPromoted = promoted.filterNot { it in blacklist }.toSet()
-        if (filteredPromoted.size != promoted.size) {
-            _promotedKeys.value = filteredPromoted
-        }
         val candidates = buildDreamSignCandidates(dreams, blacklist = blacklist)
         val candidatesByKey = candidates.associateBy { it.key }
         val promotedCandidates = filteredPromoted.map { key ->
@@ -64,11 +73,11 @@ class DreamSignsViewModel(
     )
 
     fun promoteSign(key: String) {
-        _promotedKeys.update { current -> current + key }
+        viewModelScope.launch { preferences.addPromotedDreamSign(key) }
     }
 
     fun removePromotedSign(key: String) {
-        _promotedKeys.update { current -> current - key }
+        viewModelScope.launch { preferences.removePromotedDreamSign(key) }
     }
 
     fun addToBlacklist(term: String) {

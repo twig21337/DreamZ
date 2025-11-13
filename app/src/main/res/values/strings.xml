@@ -23,6 +23,7 @@
     <string name="dream_intensity_value">Intensity: %1$d / 10</string>
     <string name="dream_emotion_value">Emotion: %1$d / 10</string>
     <string name="dream_rating_value">%1$d / 10</string>
+    <string name="dream_list_title_with_date">%1$s • %2$s</string>
     <string name="lucid_dream_content_description">Lucid dream</string>
     <string name="recurring_dream_content_description">Recurring dream</string>
 

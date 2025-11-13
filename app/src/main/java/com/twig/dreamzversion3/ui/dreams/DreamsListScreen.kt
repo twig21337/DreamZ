@@ -40,11 +40,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarHost
 import com.twig.dreamzversion3.R
 import com.twig.dreamzversion3.model.dream.Dream
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +56,7 @@ fun DreamsListRoute(
     onDreamSelected: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    viewModel: DreamsViewModel = viewModel()
+    viewModel: DreamsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DreamsListScreen(
@@ -171,6 +174,9 @@ private fun DreamsTitleList(
             SortHeader(text = sortLabel)
         }
         items(dreams, key = { it.id }) { dream ->
+            val formattedDate = remember(dream.createdAt) {
+                formatDreamDate(dream.createdAt)
+            }
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -184,7 +190,11 @@ private fun DreamsTitleList(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = dream.title,
+                        text = stringResource(
+                            id = R.string.dream_list_title_with_date,
+                            dream.title,
+                            formattedDate
+                        ),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f)
                     )
@@ -196,6 +206,16 @@ private fun DreamsTitleList(
             }
         }
     }
+}
+
+private val dreamDateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+
+private fun formatDreamDate(createdAt: Long): String {
+    val localDate = Instant.ofEpochMilli(createdAt)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+    return dreamDateFormatter.format(localDate)
 }
 
 @Composable

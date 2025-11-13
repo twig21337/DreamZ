@@ -49,7 +49,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.twig.dreamzversion3.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -61,7 +60,7 @@ fun DreamEntryRoute(
     onShowMessage: (String) -> Unit,
     dreamId: String? = null,
     modifier: Modifier = Modifier,
-    viewModel: DreamsViewModel = viewModel()
+    viewModel: DreamsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }

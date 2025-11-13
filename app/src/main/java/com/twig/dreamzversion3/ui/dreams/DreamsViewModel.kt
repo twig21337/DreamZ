@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.twig.dreamzversion3.R
+import com.twig.dreamzversion3.data.DreamLayoutMode
+import com.twig.dreamzversion3.data.UserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepository
 import com.twig.dreamzversion3.model.dream.Dream
 import java.util.UUID
@@ -22,7 +24,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class DreamsViewModel(
-    private val repository: DreamRepository
+    private val repository: DreamRepository,
+    private val preferences: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _dreamEntryState = MutableStateFlow(DreamEntryUiState())
@@ -51,6 +54,17 @@ class DreamsViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = DreamsUiState()
     )
+
+    init {
+        viewModelScope.launch {
+            preferences.layoutModeFlow.collect { mode ->
+                val listMode = mode.toDreamListMode()
+                if (_listMode.value != listMode) {
+                    _listMode.value = listMode
+                }
+            }
+        }
+    }
 
     fun onTitleChange(title: String) {
         _dreamEntryState.update { it.copy(title = title) }
@@ -153,11 +167,13 @@ class DreamsViewModel(
     }
 
     fun toggleListMode() {
-        _listMode.update { current ->
-            when (current) {
-                DreamListMode.List -> DreamListMode.Card
-                DreamListMode.Card -> DreamListMode.List
-            }
+        val newMode = when (_listMode.value) {
+            DreamListMode.List -> DreamListMode.Card
+            DreamListMode.Card -> DreamListMode.List
+        }
+        _listMode.value = newMode
+        viewModelScope.launch {
+            preferences.setLayoutMode(newMode.toLayoutMode())
         }
     }
 
@@ -166,10 +182,23 @@ class DreamsViewModel(
     }
 
     companion object {
-        fun factory(repository: DreamRepository): ViewModelProvider.Factory = viewModelFactory {
-            initializer { DreamsViewModel(repository) }
+        fun factory(
+            repository: DreamRepository,
+            preferences: UserPreferencesRepository
+        ): ViewModelProvider.Factory = viewModelFactory {
+            initializer { DreamsViewModel(repository, preferences) }
         }
     }
+}
+
+private fun DreamLayoutMode.toDreamListMode(): DreamListMode = when (this) {
+    DreamLayoutMode.LIST -> DreamListMode.List
+    DreamLayoutMode.CARDS -> DreamListMode.Card
+}
+
+private fun DreamListMode.toLayoutMode(): DreamLayoutMode = when (this) {
+    DreamListMode.List -> DreamLayoutMode.LIST
+    DreamListMode.Card -> DreamLayoutMode.CARDS
 }
 
 data class DreamsUiState(
