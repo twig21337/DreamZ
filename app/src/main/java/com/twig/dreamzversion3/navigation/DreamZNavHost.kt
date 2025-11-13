@@ -1,10 +1,15 @@
 package com.twig.dreamzversion3.navigation
 
+import android.net.Uri
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -12,28 +17,25 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.twig.dreamzversion3.R
 import com.twig.dreamzversion3.account.AccountRoute
 import com.twig.dreamzversion3.data.LocalUserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepositories
+import com.twig.dreamzversion3.dreamsigns.DreamSignDetailRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignIgnoredWordsRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignsDestinations
 import com.twig.dreamzversion3.dreamsigns.DreamSignsRoute
 import com.twig.dreamzversion3.dreamsigns.DreamSignsViewModel
-import com.twig.dreamzversion3.insights.InsightsRoute
-import com.twig.dreamzversion3.insights.InsightsViewModel
 import com.twig.dreamzversion3.drive.DriveSyncManager
 import com.twig.dreamzversion3.drive.DriveSyncStateRepository
+import com.twig.dreamzversion3.insights.InsightsRoute
+import com.twig.dreamzversion3.insights.InsightsViewModel
 import com.twig.dreamzversion3.settings.SettingsScreen
 import com.twig.dreamzversion3.settings.SettingsViewModel
 import com.twig.dreamzversion3.ui.dreams.DreamEntryRoute
 import com.twig.dreamzversion3.ui.dreams.DreamsDestinations
 import com.twig.dreamzversion3.ui.dreams.DreamsListRoute
 import com.twig.dreamzversion3.ui.dreams.DreamsViewModel
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableIntStateOf
-import com.twig.dreamzversion3.R
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -188,6 +190,9 @@ fun DreamZNavHost(
                     onManageIgnoredWords = {
                         navController.navigate(DreamSignsDestinations.IGNORED_ROUTE)
                     },
+                    onOpenPromotedSignDetail = { signKey ->
+                        navController.navigate(DreamSignsDestinations.detailRoute(signKey))
+                    },
                     viewModel = viewModel
                 )
             }
@@ -208,6 +213,40 @@ fun DreamZNavHost(
                 )
                 DreamSignIgnoredWordsRoute(
                     onNavigateBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
+            }
+            composable(
+                route = DreamSignsDestinations.DETAIL_ROUTE,
+                arguments = listOf(
+                    navArgument(DreamSignsDestinations.SIGN_KEY_ARG) {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(DreamZDestination.DreamSigns.route)
+                }
+                val preferences = LocalUserPreferencesRepository.current
+                val viewModelFactory = remember(preferences, dreamRepository) {
+                    DreamSignsViewModel.factory(
+                        repository = dreamRepository,
+                        preferences = preferences
+                    )
+                }
+                val viewModel: DreamSignsViewModel = viewModel(
+                    parentEntry,
+                    factory = viewModelFactory
+                )
+                val encodedKey = backStackEntry.arguments?.getString(DreamSignsDestinations.SIGN_KEY_ARG)
+                    ?: return@composable
+                val signKey = Uri.decode(encodedKey)
+                DreamSignDetailRoute(
+                    signKey = signKey,
+                    onNavigateBack = { navController.popBackStack() },
+                    onOpenDream = { dreamId ->
+                        navController.navigate(DreamsDestinations.editRoute(dreamId))
+                    },
                     viewModel = viewModel
                 )
             }

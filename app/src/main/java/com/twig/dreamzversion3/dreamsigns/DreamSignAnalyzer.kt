@@ -15,10 +15,11 @@ private data class MutableDreamSignCandidate(
     var displayText: String,
     var count: Int,
     val sources: MutableSet<DreamSignSource>,
-    val dreamTitles: LinkedHashSet<String>
+    val dreamReferences: LinkedHashSet<DreamReference>
 )
 
 private data class DreamContext(
+    val id: String,
     val title: String,
     val features: Set<String>
 )
@@ -60,14 +61,14 @@ internal fun buildDreamSignCandidates(
                     displayText = display,
                     count = 0,
                     sources = mutableSetOf(),
-                    dreamTitles = linkedSetOf()
+                    dreamReferences = linkedSetOf()
                 )
             }
             candidate.count += sign.count
             candidate.sources += DreamSignSource.Description
             contexts.forEach { context ->
                 if (context.features.contains(key)) {
-                    candidate.dreamTitles += context.title
+                    candidate.dreamReferences += DreamReference(context.id, context.title)
                 }
             }
         }
@@ -86,12 +87,12 @@ internal fun buildDreamSignCandidates(
                         displayText = tag.ifBlank { key },
                         count = 0,
                         sources = mutableSetOf(),
-                        dreamTitles = linkedSetOf()
+                        dreamReferences = linkedSetOf()
                     )
                 }
                 candidate.count += 1
                 candidate.sources += DreamSignSource.Tag
-                candidate.dreamTitles += title
+                candidate.dreamReferences += DreamReference(dream.id, title)
             }
         }
     }
@@ -105,19 +106,20 @@ internal fun buildDreamSignCandidates(
                 displayText = mutable.displayText,
                 count = mutable.count,
                 sources = mutable.sources.toSet(),
-                dreamTitles = mutable.dreamTitles.toList()
+                dreams = mutable.dreamReferences.toList()
             )
         }
 }
 
 private fun Dream.toContext(stopwords: Set<String>): DreamContext {
-    if (description.isBlank()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
+    val normalizedTitle = title.ifBlank { "Untitled Dream" }
+    if (description.isBlank()) return DreamContext(id, normalizedTitle, emptySet())
     val tokens = tokenizeDreamsignWords(description, stopwords)
-    if (tokens.isEmpty()) return DreamContext(title.ifBlank { "Untitled Dream" }, emptySet())
+    if (tokens.isEmpty()) return DreamContext(id, normalizedTitle, emptySet())
     val features = mutableSetOf<String>()
     tokens.forEach { token -> features += token }
     tokens.zipWithNext { a, b -> features += "$a $b" }
-    return DreamContext(title.ifBlank { "Untitled Dream" }, features)
+    return DreamContext(id, normalizedTitle, features)
 }
 
 private fun String.isValidCandidate(stopwords: Set<String>, blacklist: Set<String>): Boolean {

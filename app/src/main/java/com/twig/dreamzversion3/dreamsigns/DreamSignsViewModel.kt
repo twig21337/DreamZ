@@ -53,7 +53,7 @@ class DreamSignsViewModel(
                 displayText = key.toDisplayName(),
                 count = 0,
                 sources = emptySet(),
-                dreamTitles = emptyList()
+                dreams = emptyList()
             )
         }
         val remainingCandidates = candidates.filterNot { candidate -> candidate.key in filteredPromoted }
@@ -113,12 +113,17 @@ enum class DreamSignSource {
     Tag
 }
 
+data class DreamReference(
+    val id: String,
+    val title: String
+)
+
 data class DreamSignCandidate(
     val key: String,
     val displayText: String,
     val count: Int,
     val sources: Set<DreamSignSource>,
-    val dreamTitles: List<String>
+    val dreams: List<DreamReference>
 )
 
 data class DreamSignsUiState(

@@ -49,6 +49,8 @@
 
     <!-- Dream signs screen -->
     <string name="dream_signs_title">Dream signs</string>
+    <string name="dream_signs_detail_title">Dreams featuring %1$s</string>
+    <string name="dream_signs_detail_empty">No dreams found for this sign yet.</string>
 
     <!-- Insights dashboard -->
     <string name="insights_title">Insights dashboard</string>

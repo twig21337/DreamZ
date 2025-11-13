@@ -1,5 +1,6 @@
 package com.twig.dreamzversion3.dreamsigns
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,6 +30,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -37,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
@@ -44,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -54,6 +58,7 @@ import com.twig.dreamzversion3.R
 @Composable
 fun DreamSignsRoute(
     onManageIgnoredWords: () -> Unit,
+    onOpenPromotedSignDetail: (String) -> Unit,
     viewModel: DreamSignsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -62,7 +67,8 @@ fun DreamSignsRoute(
         onPromoteSign = viewModel::promoteSign,
         onRemovePromotedSign = viewModel::removePromotedSign,
         onBlacklistSign = viewModel::addToBlacklist,
-        onManageIgnoredWords = onManageIgnoredWords
+        onManageIgnoredWords = onManageIgnoredWords,
+        onOpenPromotedSignDetail = onOpenPromotedSignDetail
     )
 }
 
@@ -74,6 +80,7 @@ fun DreamSignsScreen(
     onRemovePromotedSign: (String) -> Unit,
     onBlacklistSign: (String) -> Unit,
     onManageIgnoredWords: () -> Unit,
+    onOpenPromotedSignDetail: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var promotedViewType by rememberSaveable(
@@ -151,7 +158,7 @@ fun DreamSignsScreen(
                             PromotedDreamSignViewType.List -> PromotedDreamSignListItem(
                                 sign = sign,
                                 onRemove = onRemovePromotedSign,
-                                maxCount = uiState.maxCount
+                                onOpenDetails = onOpenPromotedSignDetail
                             )
                         }
                     }
@@ -185,6 +192,115 @@ fun DreamSignsScreen(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DreamSignDetailRoute(
+    signKey: String,
+    onNavigateBack: () -> Unit,
+    onOpenDream: (String) -> Unit,
+    viewModel: DreamSignsViewModel
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val sign = uiState.promotedSigns.firstOrNull { it.key == signKey }
+        ?: uiState.candidateSigns.firstOrNull { it.key == signKey }
+    if (sign == null) {
+        LaunchedEffect(signKey) { onNavigateBack() }
+        return
+    }
+    DreamSignDetailScreen(
+        sign = sign,
+        onNavigateBack = onNavigateBack,
+        onOpenDream = onOpenDream
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DreamSignDetailScreen(
+    sign: DreamSignCandidate,
+    onNavigateBack: () -> Unit,
+    onOpenDream: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(
+                            id = R.string.dream_signs_detail_title,
+                            sign.displayText
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.Outlined.ArrowBack,
+                            contentDescription = stringResource(id = R.string.cd_navigate_back)
+                        )
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        if (sign.dreams.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(id = R.string.dream_signs_detail_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(sign.dreams, key = { it.id }) { dream ->
+                    DreamSignDreamRow(
+                        dream = dream,
+                        onOpenDream = onOpenDream
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DreamSignDreamRow(
+    dream: DreamReference,
+    onOpenDream: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ListItem(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable { onOpenDream(dream.id) },
+        headlineContent = {
+            Text(
+                text = dream.title,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -415,54 +531,30 @@ private fun PromotedDreamSignCard(
 private fun PromotedDreamSignListItem(
     sign: DreamSignCandidate,
     onRemove: (String) -> Unit,
-    maxCount: Int,
+    onOpenDetails: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .clip(MaterialTheme.shapes.medium)
+            .clickable { onOpenDetails(sign.key) }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Outlined.Star,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary
         )
-        Column(
+        Text(
+            text = sign.displayText,
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = sign.displayText,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                AssistChip(
-                    onClick = {},
-                    enabled = false,
-                    label = { Text(text = stringResource(id = R.string.dream_signs_promoted_chip)) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                )
-            }
-            DreamSignFrequency(count = sign.count, maxCount = maxCount)
-            DreamSignContextText(sign = sign)
-            Text(
-                text = stringResource(id = sign.sourceDescriptionRes()),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
         IconButton(onClick = { onRemove(sign.key) }) {
             Icon(
                 imageVector = Icons.Outlined.Close,
@@ -565,7 +657,7 @@ private fun DreamSignFrequency(
 
 @Composable
 private fun DreamSignContextText(sign: DreamSignCandidate, modifier: Modifier = Modifier) {
-    val uniqueTitles = sign.dreamTitles.distinct()
+    val uniqueTitles = sign.dreams.map { it.title }.distinct()
     val displayedTitles = uniqueTitles.take(3)
     val titlesText = displayedTitles.joinToString(", ")
     val baseText = when {
