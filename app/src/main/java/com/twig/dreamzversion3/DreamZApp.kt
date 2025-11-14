@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -50,13 +51,27 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
     val preferences: UserPreferencesRepository = remember(context) {
         UserPreferencesRepository(context.userPreferencesDataStore)
     }
-    val themeMode by preferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
-    val colorCombo by preferences.colorComboFlow.collectAsState(initial = ColorCombo.AURORA)
+    val themeMode by produceState<ThemeMode?>(initialValue = null, preferences) {
+        preferences.themeModeFlow.collect { value = it }
+    }
+    val colorCombo by produceState<ColorCombo?>(initialValue = null, preferences) {
+        preferences.colorComboFlow.collect { value = it }
+    }
     val onboardingCompleted by preferences.onboardingCompletedFlow
         .map<Boolean, Boolean?> { it }
         .collectAsState(initial = null)
     val systemDark = isSystemInDarkTheme()
-    val useDarkTheme = when (themeMode) {
+    val resolvedThemeMode = themeMode
+    val resolvedColorCombo = colorCombo
+    if (resolvedThemeMode == null || resolvedColorCombo == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(if (systemDark) Color.Black else Color.White)
+        )
+        return
+    }
+    val useDarkTheme = when (resolvedThemeMode) {
         ThemeMode.SYSTEM -> systemDark
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
@@ -65,13 +80,13 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
         factory = OnboardingViewModel.factory(preferences)
     )
     val backgroundBrush = when {
-        colorCombo == ColorCombo.AURORA && useDarkTheme -> MidnightGradient
-        colorCombo == ColorCombo.AURORA && !useDarkTheme -> AuroraGradient
-        else -> colorCombo.backgroundBrush(useDarkTheme)
+        resolvedColorCombo == ColorCombo.AURORA && useDarkTheme -> MidnightGradient
+        resolvedColorCombo == ColorCombo.AURORA && !useDarkTheme -> AuroraGradient
+        else -> resolvedColorCombo.backgroundBrush(useDarkTheme)
     }
 
     CompositionLocalProvider(LocalUserPreferencesRepository provides preferences) {
-        DreamZVersion3Theme(darkTheme = useDarkTheme, colorCombo = colorCombo) {
+        DreamZVersion3Theme(darkTheme = useDarkTheme, colorCombo = resolvedColorCombo) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
