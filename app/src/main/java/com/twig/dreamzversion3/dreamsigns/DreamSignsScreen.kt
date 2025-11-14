@@ -21,12 +21,9 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.ViewList
-import androidx.compose.material.icons.outlined.ViewModule
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -42,7 +39,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -83,10 +79,6 @@ fun DreamSignsScreen(
     onOpenPromotedSignDetail: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var promotedViewType by rememberSaveable(
-        stateSaver = enumSaver(enumValues<PromotedDreamSignViewType>())
-    ) { mutableStateOf(PromotedDreamSignViewType.Cards) }
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -133,10 +125,6 @@ fun DreamSignsScreen(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f)
                         )
-                        PromotedDreamSignViewToggle(
-                            selectedView = promotedViewType,
-                            onSelectView = { promotedViewType = it }
-                        )
                     }
                 }
                 if (uiState.promotedSigns.isEmpty()) {
@@ -149,18 +137,11 @@ fun DreamSignsScreen(
                     }
                 } else {
                     items(uiState.promotedSigns, key = { it.key }) { sign ->
-                        when (promotedViewType) {
-                            PromotedDreamSignViewType.Cards -> PromotedDreamSignCard(
-                                sign = sign,
-                                onRemove = onRemovePromotedSign,
-                                maxCount = uiState.maxCount
-                            )
-                            PromotedDreamSignViewType.List -> PromotedDreamSignListItem(
-                                sign = sign,
-                                onRemove = onRemovePromotedSign,
-                                onOpenDetails = onOpenPromotedSignDetail
-                            )
-                        }
+                        PromotedDreamSignListItem(
+                            sign = sign,
+                            onRemove = onRemovePromotedSign,
+                            onOpenDetails = onOpenPromotedSignDetail
+                        )
                     }
                 }
 
@@ -434,99 +415,6 @@ private fun DreamSignsEmptyState(modifier: Modifier = Modifier) {
     }
 }
 
-private enum class PromotedDreamSignViewType { Cards, List }
-
-@Composable
-private fun PromotedDreamSignViewToggle(
-    selectedView: PromotedDreamSignViewType,
-    onSelectView: (PromotedDreamSignViewType) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        FilterChip(
-            selected = selectedView == PromotedDreamSignViewType.Cards,
-            onClick = { onSelectView(PromotedDreamSignViewType.Cards) },
-            label = { Text(text = stringResource(id = R.string.dream_signs_promoted_view_cards)) },
-            leadingIcon = { Icon(imageVector = Icons.Outlined.ViewModule, contentDescription = null) }
-        )
-        FilterChip(
-            selected = selectedView == PromotedDreamSignViewType.List,
-            onClick = { onSelectView(PromotedDreamSignViewType.List) },
-            label = { Text(text = stringResource(id = R.string.dream_signs_promoted_view_list)) },
-            leadingIcon = { Icon(imageVector = Icons.Outlined.ViewList, contentDescription = null) }
-        )
-    }
-}
-
-@Composable
-private fun PromotedDreamSignCard(
-    sign: DreamSignCandidate,
-    onRemove: (String) -> Unit,
-    maxCount: Int,
-    modifier: Modifier = Modifier
-) {
-    OutlinedCard(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Star,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = sign.displayText,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        label = { Text(text = stringResource(id = R.string.dream_signs_promoted_chip)) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                }
-                DreamSignFrequency(count = sign.count, maxCount = maxCount)
-                DreamSignContextText(sign = sign)
-                Text(
-                    text = stringResource(id = sign.sourceDescriptionRes()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = { onRemove(sign.key) }) {
-                Icon(
-                    imageVector = Icons.Outlined.Close,
-                    contentDescription = stringResource(
-                        id = R.string.dream_signs_remove_promoted_cd,
-                        sign.displayText
-                    )
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun PromotedDreamSignListItem(
     sign: DreamSignCandidate,
@@ -692,7 +580,3 @@ private fun DreamSignCandidate.sourceDescriptionRes(): Int {
     }
 }
 
-private fun <T : Enum<T>> enumSaver(values: Array<T>): Saver<T, String> = Saver(
-    save = { it.name },
-    restore = { restored -> values.first { it.name == restored } }
-)
