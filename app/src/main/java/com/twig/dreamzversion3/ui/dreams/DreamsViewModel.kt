@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -65,12 +66,19 @@ class DreamsViewModel(
 
     init {
         viewModelScope.launch {
-            preferences.layoutModeFlow.collect { mode ->
-                val listMode = mode.toDreamListMode()
-                if (_listMode.value != listMode) {
-                    _listMode.value = listMode
+            preferences.layoutModeFlow
+                .catch {
+                    if (_listMode.value == null) {
+                        _listMode.value = DreamListMode.Card
+                    }
+                    emit(DreamLayoutMode.CARDS)
                 }
-            }
+                .collect { mode ->
+                    val listMode = mode.toDreamListMode()
+                    if (_listMode.value != listMode) {
+                        _listMode.value = listMode
+                    }
+                }
         }
         viewModelScope.launch {
             combine(

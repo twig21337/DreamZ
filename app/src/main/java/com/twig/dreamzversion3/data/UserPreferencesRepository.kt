@@ -78,7 +78,9 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     val layoutModeFlow: Flow<DreamLayoutMode> = dataStore.data.map { prefs ->
-        prefs[KEY_LAYOUT_MODE]?.let(DreamLayoutMode::valueOf) ?: DreamLayoutMode.CARDS
+        prefs[KEY_LAYOUT_MODE]?.let { stored ->
+            runCatching { DreamLayoutMode.valueOf(stored) }.getOrNull()
+        } ?: DreamLayoutMode.CARDS
     }
 
     val backupFrequencyFlow: Flow<BackupFrequency> = dataStore.data.map { prefs ->
