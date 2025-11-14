@@ -35,6 +35,13 @@ internal fun buildDreamSignCandidates(
     val extraStopwords = dreamSignStopwords + blacklist
     val stopwords = buildDreamsignStopwords(extraStopwords)
     val contexts = dreams.map { it.toContext(stopwords) }
+    val featureIndex = mutableMapOf<String, MutableSet<DreamReference>>()
+    contexts.forEach { context ->
+        context.features.forEach { feature ->
+            val references = featureIndex.getOrPut(feature) { linkedSetOf() }
+            references += DreamReference(context.id, context.title)
+        }
+    }
 
     val descriptionTexts = dreams.mapNotNull { dream ->
         dream.description.takeIf { it.isNotBlank() }
@@ -66,10 +73,8 @@ internal fun buildDreamSignCandidates(
             }
             candidate.count += sign.count
             candidate.sources += DreamSignSource.Description
-            contexts.forEach { context ->
-                if (context.features.contains(key)) {
-                    candidate.dreamReferences += DreamReference(context.id, context.title)
-                }
+            featureIndex[key]?.let { references ->
+                candidate.dreamReferences.addAll(references)
             }
         }
     }
