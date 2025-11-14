@@ -42,6 +42,7 @@ import com.twig.dreamzversion3.ui.theme.AuroraGradient
 import com.twig.dreamzversion3.ui.theme.MidnightGradient
 import com.twig.dreamzversion3.ui.onboarding.OnboardingRoute
 import com.twig.dreamzversion3.ui.onboarding.OnboardingViewModel
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
@@ -51,7 +52,9 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
     }
     val themeMode by preferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
     val colorCombo by preferences.colorComboFlow.collectAsState(initial = ColorCombo.AURORA)
-    val onboardingCompleted by preferences.onboardingCompletedFlow.collectAsState(initial = false)
+    val onboardingCompleted by preferences.onboardingCompletedFlow
+        .map<Boolean, Boolean?> { it }
+        .collectAsState(initial = null)
     val systemDark = isSystemInDarkTheme()
     val useDarkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> systemDark
@@ -74,14 +77,14 @@ fun DreamZApp(appState: DreamZAppState = rememberDreamZAppState()) {
                     .fillMaxSize()
                     .background(backgroundBrush)
             ) {
-                if (!onboardingCompleted) {
-                    OnboardingRoute(
+                when (onboardingCompleted) {
+                    null -> Unit
+                    false -> OnboardingRoute(
                         onFinished = {},
                         viewModel = onboardingViewModel,
                         modifier = Modifier.fillMaxSize()
                     )
-                } else {
-                    Scaffold(
+                    true -> Scaffold(
                         containerColor = Color.Transparent,
                         bottomBar = { DreamZBottomBar(appState) }
                     ) { innerPadding ->

@@ -2,6 +2,7 @@ package com.twig.dreamzversion3.ui.dreams
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,17 +60,21 @@ fun DreamsListRoute(
     viewModel: DreamsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    DreamsListScreen(
-        dreams = uiState.dreams,
-        listMode = uiState.listMode,
-        sortOption = uiState.sortOption,
-        onAddDream = onAddDream,
-        onDreamSelected = onDreamSelected,
-        onToggleListMode = viewModel::toggleListMode,
-        onSortOptionSelected = viewModel::selectSortOption,
-        snackbarHostState = snackbarHostState,
-        modifier = modifier
-    )
+    if (!uiState.isInitialized) {
+        Box(modifier = modifier.fillMaxSize())
+    } else {
+        DreamsListScreen(
+            dreams = uiState.dreams,
+            listMode = uiState.listMode,
+            sortOption = uiState.sortOption,
+            onAddDream = onAddDream,
+            onDreamSelected = onDreamSelected,
+            onToggleListMode = viewModel::toggleListMode,
+            onSortOptionSelected = viewModel::selectSortOption,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

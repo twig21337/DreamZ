@@ -37,8 +37,8 @@ class DreamsViewModel(
     private val highlightTerms = MutableStateFlow<Set<String>>(emptySet())
     private val _dreamEntryState = MutableStateFlow(DreamEntryUiState())
     private val dreamEntryState: StateFlow<DreamEntryUiState> = _dreamEntryState.asStateFlow()
-    private val _listMode = MutableStateFlow(DreamListMode.Card)
-    private val listMode: StateFlow<DreamListMode> = _listMode.asStateFlow()
+    private val _listMode = MutableStateFlow<DreamListMode?>(null)
+    private val listMode: StateFlow<DreamListMode?> = _listMode.asStateFlow()
     private val _sortOption = MutableStateFlow(DreamSortOption.DateNewest)
     private val sortOption: StateFlow<DreamSortOption> = _sortOption.asStateFlow()
     private val _events = MutableSharedFlow<DreamEditorEvent>(extraBufferCapacity = 1)
@@ -53,8 +53,9 @@ class DreamsViewModel(
         DreamsUiState(
             dreams = dreams.sortedWith(sort.comparator),
             entry = entry,
-            listMode = mode,
-            sortOption = sort
+            listMode = mode ?: DreamListMode.Card,
+            sortOption = sort,
+            isInitialized = mode != null
         )
     }.stateIn(
         scope = viewModelScope,
@@ -252,7 +253,8 @@ class DreamsViewModel(
     }
 
     fun toggleListMode() {
-        val newMode = when (_listMode.value) {
+        val current = _listMode.value ?: DreamListMode.Card
+        val newMode = when (current) {
             DreamListMode.List -> DreamListMode.Card
             DreamListMode.Card -> DreamListMode.List
         }
@@ -290,7 +292,8 @@ data class DreamsUiState(
     val dreams: List<Dream> = emptyList(),
     val entry: DreamEntryUiState = DreamEntryUiState(),
     val listMode: DreamListMode = DreamListMode.Card,
-    val sortOption: DreamSortOption = DreamSortOption.DateNewest
+    val sortOption: DreamSortOption = DreamSortOption.DateNewest,
+    val isInitialized: Boolean = false
 )
 
 data class DreamEntryUiState(
