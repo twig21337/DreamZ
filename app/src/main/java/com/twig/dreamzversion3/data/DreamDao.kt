@@ -10,7 +10,8 @@ interface DreamDao {
         SELECT * FROM dream_entries
         WHERE (:query == '' OR title LIKE '%' || :query || '%' OR body LIKE '%' || :query || '%')
         AND (:tag IS NULL OR tags LIKE '%' || :tag || '%')
-        AND (:startMillis IS NULL OR createdAt BETWEEN :startMillis AND :endMillis)
+        AND (:startMillis IS NULL OR createdAt >= :startMillis)
+        AND (:endMillis IS NULL OR createdAt <= :endMillis)
         ORDER BY createdAt DESC
         """
     )
