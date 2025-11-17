@@ -208,6 +208,7 @@ fun DreamEntryScreen(
 ) {
     val scrollState = rememberScrollState()
     val titleFocusRequester = remember { FocusRequester() }
+    var isDescriptionFieldFocused by remember { mutableStateOf(false) }
     val highlightTerms = remember(entryState.tags, entryState.highlightedDreamSigns) {
         (entryState.tags + entryState.highlightedDreamSigns)
             .map { it.trim().lowercase() }
@@ -283,11 +284,18 @@ fun DreamEntryScreen(
                     onValueChange = onDescriptionChange,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .bringIntoViewOnFocus(entryState.description),
+                        .bringIntoViewOnFocus(entryState.description)
+                        .onFocusChanged { focusState ->
+                            isDescriptionFieldFocused = focusState.isFocused
+                        },
                     label = { Text(text = stringResource(id = R.string.dream_description_label)) },
                     supportingText = { Text(text = stringResource(id = R.string.dream_description_support)) },
                     minLines = 4,
-                    visualTransformation = descriptionTransformation
+                    visualTransformation = if (isDescriptionFieldFocused) {
+                        VisualTransformation.None
+                    } else {
+                        descriptionTransformation
+                    }
                 )
                 TagEditorSection(
                     tags = entryState.tags,
