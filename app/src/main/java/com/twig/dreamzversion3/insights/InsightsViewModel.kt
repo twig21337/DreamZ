@@ -7,6 +7,7 @@ import com.twig.dreamzversion3.data.UserPreferencesRepository
 import com.twig.dreamzversion3.data.dream.DreamRepositories
 import com.twig.dreamzversion3.data.dream.DreamRepository
 import com.twig.dreamzversion3.dreamsigns.DreamSignCandidate
+import com.twig.dreamzversion3.dreamsigns.DreamSignSource
 import com.twig.dreamzversion3.dreamsigns.buildDreamSignCandidates
 import com.twig.dreamzversion3.model.dream.Dream
 import java.time.DayOfWeek
@@ -30,14 +31,29 @@ class InsightsViewModel(
 
     val uiState: StateFlow<InsightsUiState> = combine(
         repository.dreams,
-        preferences.dreamSignBlacklistFlow
-    ) { dreams, blacklist ->
+        preferences.dreamSignBlacklistFlow,
+        preferences.promotedDreamSignsFlow
+    ) { dreams, blacklist, promoted ->
         val weeklySummary = buildWeeklySummary(dreams)
         val lucidityTrend = buildLucidityTrend(dreams)
-        val topSigns = buildDreamSignCandidates(
+        val filteredPromoted = promoted.filterNot { it in blacklist }.toSet()
+        val candidates = buildDreamSignCandidates(
             dreams = dreams,
             blacklist = blacklist
-        ).take(TOP_DREAM_SIGNS_LIMIT)
+        )
+        val filteredCandidates = candidates.filter { candidate ->
+            DreamSignSource.Tag in candidate.sources || candidate.key in filteredPromoted
+        }
+        val prioritizedCandidates = if (filteredPromoted.isEmpty()) {
+            filteredCandidates
+        } else {
+            val promotedMatches = filteredPromoted.mapNotNull { key ->
+                filteredCandidates.firstOrNull { it.key == key }
+            }
+            val remaining = filteredCandidates.filterNot { it.key in filteredPromoted }
+            promotedMatches + remaining
+        }
+        val topSigns = prioritizedCandidates.take(TOP_DREAM_SIGNS_LIMIT)
         InsightsUiState(
             hasDreams = dreams.isNotEmpty(),
             weeklySummary = weeklySummary,

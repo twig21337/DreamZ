@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,7 +54,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,9 +67,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -80,20 +76,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.twig.dreamzversion3.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamEntryRoute(
     onNavigateBack: () -> Unit,
     onShowMessage: (String) -> Unit,
-    onNavigateToDream: (String) -> Unit,
     dreamId: String? = null,
     modifier: Modifier = Modifier,
     viewModel: DreamsViewModel
@@ -143,12 +136,6 @@ fun DreamEntryRoute(
         }
     }
 
-    val dreams = uiState.dreams
-    val entry = uiState.entry
-    val currentIndex = entry.dreamId?.let { id -> dreams.indexOfFirst { it.id == id } } ?: -1
-    val previousDreamId = if (currentIndex > 0) dreams[currentIndex - 1].id else null
-    val nextDreamId = if (currentIndex != -1 && currentIndex < dreams.lastIndex) dreams[currentIndex + 1].id else null
-
     DreamEntryScreen(
         entryState = uiState.entry,
         onTitleChange = viewModel::onTitleChange,
@@ -190,8 +177,6 @@ fun DreamEntryRoute(
         showDeleteButton = uiState.entry.isEditing,
         snackbarHostState = snackbarHostState,
         showSuccessCheck = showSuccessCheck,
-        onNavigateToPrevious = previousDreamId?.let { id -> { onNavigateToDream(id) } },
-        onNavigateToNext = nextDreamId?.let { id -> { onNavigateToDream(id) } },
         modifier = modifier
     )
 }
@@ -219,8 +204,6 @@ fun DreamEntryScreen(
     showDeleteButton: Boolean,
     snackbarHostState: SnackbarHostState,
     showSuccessCheck: Boolean,
-    onNavigateToPrevious: (() -> Unit)?,
-    onNavigateToNext: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -278,10 +261,6 @@ fun DreamEntryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .dreamSwipeGesture(
-                    onSwipeLeft = onNavigateToNext,
-                    onSwipeRight = onNavigateToPrevious
-                )
         ) {
             Column(
                 modifier = Modifier
@@ -296,7 +275,7 @@ fun DreamEntryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(titleFocusRequester)
-                        .bringIntoViewOnFocus(),
+                        .bringIntoViewOnFocus(entryState.title),
                     label = { Text(text = stringResource(id = R.string.dream_title_label)) }
                 )
                 OutlinedTextField(
@@ -304,7 +283,7 @@ fun DreamEntryScreen(
                     onValueChange = onDescriptionChange,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .bringIntoViewOnFocus(),
+                        .bringIntoViewOnFocus(entryState.description),
                     label = { Text(text = stringResource(id = R.string.dream_description_label)) },
                     supportingText = { Text(text = stringResource(id = R.string.dream_description_support)) },
                     minLines = 4,
@@ -322,7 +301,7 @@ fun DreamEntryScreen(
                     onValueChange = onMoodChange,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .bringIntoViewOnFocus(),
+                        .bringIntoViewOnFocus(entryState.mood),
                     label = { Text(text = stringResource(id = R.string.dream_mood_label)) }
                 )
                 LucidDreamCheckbox(
@@ -501,7 +480,7 @@ private fun TagInputChip(
         },
         modifier = modifier
             .widthIn(min = 120.dp, max = 240.dp)
-            .bringIntoViewOnFocus()
+            .bringIntoViewOnFocus(value)
             .onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyUp && (event.key == Key.Enter || event.key == Key.NumPadEnter)) {
                     onCommit()
@@ -644,54 +623,25 @@ private fun EntrySlider(
     }
 }
 
-private fun Modifier.bringIntoViewOnFocus(): Modifier = composed {
+private fun Modifier.bringIntoViewOnFocus(trackedValue: Any? = null): Modifier = composed {
     val requester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    var isFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(trackedValue, isFocused) {
+        if (isFocused) {
+            requester.bringIntoView()
+        }
+    }
     this.then(
         Modifier
             .bringIntoViewRequester(requester)
             .onFocusChanged { focusState ->
+                isFocused = focusState.isFocused
                 if (focusState.isFocused) {
                     coroutineScope.launch { requester.bringIntoView() }
                 }
             }
     )
-}
-
-private fun Modifier.dreamSwipeGesture(
-    onSwipeLeft: (() -> Unit)?,
-    onSwipeRight: (() -> Unit)?,
-    threshold: Dp = 96.dp
-): Modifier = composed {
-    val leftHandler by rememberUpdatedState(onSwipeLeft)
-    val rightHandler by rememberUpdatedState(onSwipeRight)
-    val density = LocalDensity.current
-    val thresholdPx = remember(threshold, density) { with(density) { threshold.toPx() } }
-    if (leftHandler == null && rightHandler == null) {
-        this
-    } else {
-        this.then(
-            Modifier.pointerInput(leftHandler, rightHandler, thresholdPx) {
-                var totalDrag = 0f
-                detectHorizontalDragGestures(
-                    onDragStart = { totalDrag = 0f },
-                    onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
-                    onDragCancel = { totalDrag = 0f },
-                    onDragEnd = {
-                        val drag = totalDrag
-                        if (abs(drag) >= thresholdPx) {
-                            if (drag < 0 && leftHandler != null) {
-                                leftHandler?.invoke()
-                            } else if (drag > 0 && rightHandler != null) {
-                                rightHandler?.invoke()
-                            }
-                        }
-                        totalDrag = 0f
-                    }
-                )
-            }
-        )
-    }
 }
 
 private class DreamSignHighlightTransformation(
