@@ -50,15 +50,6 @@ android {
         )
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     compileOptions {
         // you can bump to 17 later if your project uses it
         sourceCompatibility = JavaVersion.VERSION_11
@@ -75,7 +66,37 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.15"
     }
+    signingConfigs {
+        create("release") {
+            val uploadStoreFile = localProps.getProperty("uploadStoreFile")
+            val uploadStorePassword = localProps.getProperty("uploadStorePassword")
+            val uploadKeyAlias = localProps.getProperty("uploadKeyAlias")
+            val uploadKeyPassword = localProps.getProperty("uploadKeyPassword")
 
+            if (!uploadStoreFile.isNullOrBlank() &&
+                !uploadStorePassword.isNullOrBlank() &&
+                !uploadKeyAlias.isNullOrBlank() &&
+                !uploadKeyPassword.isNullOrBlank()
+            ) {
+                storeFile = file(uploadStoreFile)
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
 }
 
 dependencies {

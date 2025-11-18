@@ -1,0 +1,17 @@
+# Copy this file to `local.properties` and fill in the real values.
+# This file is intentionally checked in; do not check in your actual `local.properties`.
+
+# Android SDK installation directory
+sdk.dir=/Users/you/Library/Android/sdk
+
+# OAuth configuration for Google Drive sync
+google.drive.clientId=
+google.drive.clientSecret=
+google.drive.redirectUri=
+
+# Play App Signing upload key configuration
+# The keystore path must be absolute or relative to the project root.
+uploadStoreFile=/absolute/path/to/upload-keystore.jks
+uploadStorePassword=
+uploadKeyAlias=
+uploadKeyPassword=
